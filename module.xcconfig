@@ -26,4 +26,4 @@
 // IMPORTANT NOTE: always use $(inherited) in your overrides
 // 
 
-OTHER_LDFLAGS=$(inherited) -dynamic -licucore -lc++ -framework CFNetwork -framework Security -framework SystemConfiguration -framework Accounts -framework Social -F"/Users/vstross/Google Drive/projects/LeftLaneLab/Titanium/com.leftlanelab.firebase/source" -framework Firebase -framework FirebaseSimpleLogin
+OTHER_LDFLAGS=$(inherited) -dynamic -licucore -lc++ -framework CFNetwork -framework Security -framework SystemConfiguration -framework Accounts -framework Social -F"/Users/vstross/Google Drive/projects/LeftLaneLab/com.leftlanelab.firebase/source" -framework Firebase -framework FirebaseSimpleLogin
