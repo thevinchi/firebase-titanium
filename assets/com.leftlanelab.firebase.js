@@ -61,6 +61,8 @@ Firebase.prototype.auth = function (authToken, onComplete, onCancel)
 		(_.isFunction(onComplete) ? onComplete : null),
 		(_.isFunction(onCancel) ? onCancel : null)
 	);
+
+	return this;
 };
 
 /*
@@ -72,6 +74,8 @@ Firebase.prototype.unauth = function (onComplete)
 {
 	// Kick the [firebase]
 	this.firebase.unauth(this.url, (_.isFunction(onComplete) ? onComplete : null));
+
+	return this;
 };
 
 /*
@@ -143,104 +147,144 @@ Firebase.prototype.toString = function ()
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
  */
-Firebase.prototype.set = function (value, onComplete, onCompleteContext)
+Firebase.prototype.set = function (value, onComplete)
 {
 	// Safety Net
-	if (_.isUndefined(value)) {return;}
+	if (_.isUndefined(value)) {return this;}
 
 	// Set [value] in [firebase]
 	this.firebase.set(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
 	{
-		// Execute w/[onCompleteContext]
-		if (_.isObject(onCompleteContext))
-		{
-			// Bind & Execute
-			_.bind(onComplete, onCompleteContext, error)();
-		}
-
-		// Simple Execution
-		else {onComplete(error);}
+		onComplete(error);
 	}));
+
+	return this;
 };
 
 /*
  * Update [value] in Firebase
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
  */
-Firebase.prototype.update = function (value, callback, callbackContext, onComplete, onCompleteContext)
+Firebase.prototype.update = function (value, onComplete)
 {
-	// Prepare to handle the [callback]
-	if (_.isFunction(onComplete))
+	// Safety Net
+	if (_.isUndefined(value)) {return this;}
+
+	// Update [firebase] with [value]
+	this.firebase.update(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
 	{
-		// Save [this] reference for local [callback]
-		var _this = this;
+		onComplete(error);
+	}));
 
-		// Set the local [callback]
-		var _callback = function ()
-		{
-			// Remove [listener]
-			_this.once('value', onComplete, (_.isObject(onCompleteContext) ? onCompleteContext : null));
-
-			// Garbage Collection
-			_this = null, _callback = null;
-		};
-	}
-
-	// Update the existing [firebase] key(s)
-	this.firebase.update(this.url, value,
-		(_.isFunction(callback) ? callback : null),
-		(_.isObject(callbackContext) ? callbackContext : null),
-		(_.isFunction(onComplete) ? _callback : null)
-	);
-
-	return;
+	return this;
 };
 
 /*
- * Add a new [child] (w/[value] if supplied)
+ * Remove all data from the current [firebase]
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
  */
-Firebase.prototype.push = function (value, callback)
+Firebase.prototype.remove = function (onComplete)
 {
-	// Clean the input
-	callback = (_.isFunction(callback) ? callback : 0);
-
-	// Get new [id] from [firebase]
-	var _id = this.firebase.childByAutoId();
-
-	// Just return [id] if no [value] is supplied
-	if (_.isUndefined(value)) {return _id;}
-
-	// Initialize the new [child] reference
-	var _child = this.child(_id);
-
-	// Prepare to handle the [callback]
-	if (_.isFunction(callback))
+	// Remove all data from [firebase]
+	this.firebase.remove(this.url, (! _.isFunction(onComplete) ? null : function (error)
 	{
-		// Set the local [callback]
-		var _callback = function ()
+		onComplete(error);
+	}));
+
+	return this;
+};
+
+/*
+ * Generate new child w/unique [id] and return a new [firebase]
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
+ */
+Firebase.prototype.push = function (value, onComplete)
+{
+	return (_.isUndefined(value) ?
+
+		// Ask for a new [name] from [firebase] and return
+		// a new [firebase] reference
+		this.child(this.firebase.push(this.url))
+	:
+		// Generate a new [child], set [value]/[onComplete]
+		// and return a new [firebase] reference
+		this.child(this.firebase.push(this.url)).set(value, onComplete)
+	);
+};
+
+/*
+ * Set/overwrite [value] && [priority] in Firebase
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
+ */
+Firebase.prototype.setWithPriority = function (value, priority, onComplete)
+{
+	// Safety Net
+	if (_.isUndefined(value) || (! _.isString(priority) && ! _.isNumber(priority))) {return this;}
+
+	// Set [value] && [priority] in [firebase]
+	this.firebase.setWithPriority(this.url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
+	{
+		onComplete(error);
+	}));
+
+	return this;
+};
+
+/*
+ * Set [priority] for the data at this Firebase location
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
+ */
+Firebase.prototype.setPriority = function (priority, onComplete)
+{
+	// Safety Net
+	if (! _.isString(priority) && ! _.isNumber(priority)) {return this;}
+
+	// Set [value] && [priority] in [firebase]
+	this.firebase.setPriority(this.url, priority, (! _.isFunction(onComplete) ? null : function (error)
+	{
+		onComplete(error);
+	}));
+
+	return this;
+};
+
+/*
+ * Atomically modify the data at this Firebase location
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-24)
+ *	- TODO: verify whether updateFunction receives a snapshot object or not...
+ */
+Firebase.prototype.transaction = function (updateFunction, onComplete, applyLocally)
+{
+	// Safety Net
+	if (! _.isFunction(updateFunction)) {return this;}
+
+	// Initiate a [transaction] in [firebase]
+	this.firebase.transaction(this.url,
+
+		// Exectute the [updateFunction]
+		function (currentData)
 		{
-			// Remove [listener]
-			_child.once('value', callback);
+			return updateFunction(currentData);
+		},
 
-			// Garbage Collection
-			_child = null, _callback = null;
-		};
+		// Set the [applyLocally] flag to allow/suppress event triggers
+		// during [updateFunction] runs
+		(_.isBoolean(applyLocally) ? applyLocally : true),
 
-		// Set the new [child] reference with [value] && [callback]
-		_child.set(value, _callback);
-	}
+		// Attach the [onComplete] callback (if supplied)
+		(! _.isFunction(onComplete) ? null : function (error)
+		{
+			onComplete(error);
+		})
+	);
 
-	// Just walk away...
-	else
-	{
-		// Set the new [child] reference with [value]
-		_child.set(value);
-
-		// Garbage Collection
-		_child = null;
-	}
-
-	// Garbage Collection
-	_id = null;
+	return this;
 };
 
 /*

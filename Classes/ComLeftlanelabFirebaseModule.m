@@ -117,22 +117,18 @@
 	// Argument Filter
 	if (! _url || ! _credential) {return;}
 	
-	// Auth the [instance]
-	[[[Firebase alloc] initWithUrl:_url] authWithCredential:_credential withCompletionBlock:^(NSError *error, id data)
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] authWithCredential:_credential withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, id data)
 	{
 		// Execute [onComplete] callback
-		if (_onComplete)
-		{
-			[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc]), (data ? data : [NSNull alloc])] thisObject:nil];
-		}
-	} withCancelBlock:^(NSError *error)
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc]), (data ? data : [NSNull alloc])] thisObject:nil];
+
+	}) withCancelBlock:(! _onCancel ? nil : ^(NSError *error)
 	{
-		// Execute [onComplete] callback
-		if (_onCancel)
-		{
-			[_onCancel call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
-		}
-	}];
+		// Execute [onCancel] callback
+		[_onCancel call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+
+	})];
 }
 
 /**
@@ -153,15 +149,12 @@
 	// Argument Filter
 	if (! _url) {return;}
 
-	// Auth the [instance]
-	[[[Firebase alloc] initWithUrl:_url] unauthWithCompletionBlock:^(NSError *error)
-	 {
-		 // Execute [onComplete] callback
-		 if (_onComplete)
-		 {
-			 [_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
-		 }
-	 }];
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] unauthWithCompletionBlock:(! _onComplete ? nil : ^(NSError *error)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
 }
 
 /**
@@ -183,27 +176,12 @@
 	// Argument Filter
 	if (! _url) {return;}
 
-	// Store new value in Firebase
-	[[[Firebase alloc] initWithUrl:_url] setValue:args[1] withCompletionBlock:(_onComplete ? ^(NSError *error, Firebase *ref)
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] setValue:args[1] withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
 	{
-		// Execute [onComplete] callback when supplied
+		// Execute [onComplete] callback
 		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
-	} : nil)];
-}
-
-/**
- * Generate (push) new [child] w/AutoID
- *
- *	- args[0] - (NSString) the URL for Firebase Reference
- *
- *	Returns: (NSString) new [child].[name] as the ID
- */
-- (NSString*)childByAutoId: (id)args
-{
-    if (! [args count] || ! [args[0] isKindOfClass:[NSString class]]) {return NO;}
-
-	// Set the new [child] and return the [name] as the ID
-	return [[[Firebase alloc] initWithUrl:args[0]] childByAutoId].name;
+	})];
 }
 
 /**
@@ -212,36 +190,171 @@
  *	- args[0] - (NSString) the URL for Firebase Reference
  *	- args[1] - (id) values to be updated
  *  - args[2] - (KrollCallback) callback
- *  - args[3] - (id) context for callback(s)
- *  - args[4] - (KrollCallback) sync callback
  *
  */
 - (void)update: (id)args
 {
-	// Safety Net
     if (! [args count] > 1) {return;}
 
-	// Initialize the [arguments]
-	NSString *_url = (! [args[0] isKindOfClass:[NSNull class]] ? args[0] : nil);
-	KrollCallback *_callback = ([args count] > 2 && ! [args[2] isKindOfClass:[NSNull class]] ? args[2] : nil);
-	id _context = ([args count] > 3 && ! [args[3] isKindOfClass:[NSNull class]] ? args[3] : nil);
-	KrollCallback *_syncCallback = ([args count] > 4 && ! [args[4] isKindOfClass:[NSNull class]] ? args[4] : nil);
-	
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 2 && [args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+
 	// Argument Filter
 	if (! _url) {return;}
 
-	// Update the [instance] @ [url]
-	[[[Firebase alloc] initWithUrl:_url] updateChildValues:args[1] withCompletionBlock:(! _syncCallback ? nil : ^(NSError *error, Firebase *ref)
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] updateChildValues:args[1] withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
 	{
-		// Execute [syncCallback]
-		[_syncCallback call:@[args[1]] thisObject:nil];
+		// Execute [onComplete] callback
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
 	})];
+}
 
-	// Execute [callback] if supplied
-	if (_callback)
+/**
+ * Remove data from [instance]
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *  - args[1] - (KrollCallback) callback
+ *
+ */
+- (void)remove: (id)args
+{
+    if (! [args count]) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 1 && [args[1] isKindOfClass:[KrollCallback class]] ? args[1] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] removeValueWithCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
 	{
-		[_callback call:@[args[1]] thisObject:_context];
+		// Execute [onComplete] callback
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Generate new [child] w/AutoID
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *
+ *	Returns: (NSString) new [child].[name]
+ */
+- (NSString*)push: (id)args
+{
+	if (! [args count]) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Create the new [child] and return [name]
+	return [[[Firebase alloc] initWithUrl:_url] childByAutoId].name;
+}
+
+/**
+ * Set [instance] with [priority]
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (id) values to be set
+ *	- args[2] - (id) priority to be set
+ *  - args[3] - (KrollCallback) callback
+ *
+ */
+- (void)setWithPriority: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] setValue:args[1] andPriority:args[2] withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Set [priority] of [instance]
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (id) priority to be set
+ *  - args[2] - (KrollCallback) callback
+ *
+ */
+- (void)setPriority: (id)args
+{
+    if (! [args count] > 1) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 2 && [args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] setPriority:args[1] withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
+	{
+		// Execute [onComplete] callback
+		NSString *_test = [_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+		NSLog(@"[INFO] Return from onComplete: %@", _test);
+	})];
+}
+
+/**
+ * Atomically modify the data of [instance]
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *  - args[1] - (KrollCallback) updateFunction callback
+ *	- args[2] - (NSNumber) applyLocally (default: YES)
+ *  - args[3] - (KrollCallback) onComplete callback
+ *
+ */
+- (void)transaction: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_updateFunction = ([args[1] isKindOfClass:[KrollCallback class]] ? args[1] : nil);
+	BOOL *_applyLocally = ([args[2] isKindOfClass:[NSNumber class]] ? ([args[2] isEqualToNumber:[NSNumber numberWithBool:YES]]) : YES);
+	KrollCallback *_onComplete = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _url || ! _updateFunction) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] runTransactionBlock:^FTransactionResult *(FMutableData *currentData)
+	{
+		// Execute [updateFunction] callback
+		NSLog(@"[INFO] Return from updateFunction: %@", currentData.value);
+
+//		currentData.value = [_updateFunction call:@[currentData.value] thisObject:nil];
+		//FTransactionResult *_result = [_updateFunction call:@[currentData] thisObject:nil];
+
+		return [FTransactionResult successWithValue:currentData];
 	}
+
+	andCompletionBlock:^(NSError *error, BOOL committed, FDataSnapshot *snapshot)
+	{
+
+		
+	}
+
+	withLocalEvents:_applyLocally];
 }
 
 /**
