@@ -673,156 +673,6 @@ function FirebaseSnapshot (snapshot)
 }
 
 /*
- * Firebase MutableData Converter
- */
-function FirebaseData (data)
-{
-	if (! _.isObject(data) || _.isNull(data)) {return null;}
-
-	// No [children], just return [value]
-	if (! data.childrenCount) {return data.value;}
-
-	// Initialize the [dictionary]
-	var dictionary = {};
-
-	// Recursively evaluate the [value] as a key:value tree
-	_.each(_.keys(data.value), function (key)
-	{
-		dictionary[key] = FirebaseData(data.value[key]);
-	});
-
-	return dictionary;
-}
-
-/*
- * Firebase Snapshot Object
- *
- ******************************************************************************/
-function FirebaseSnapshot (data, url)
-{
-	// The export
-	var my = {};
-
-	/*
-	 * Return a simple Object version of [data].[value]
-	 *
-	 **************************************************************************/
-	my.val = function () {return FirebaseData(data);};
-
-	/*
-	 * Return a new FirebaseSnapshot @ [childPath]
-	 *
-	 **************************************************************************/
-	my.child = function (childPath)
-	{
-		// Safety Net
-		if (! _.isString(childPath)) {return null;}
-
-		// Clean the input (remove leading slash)
-		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
-
-		// Initialize the [child]
-		var _child = data;
-
-		// Walk through the [childPath]
-		_.each(childPath.split('/'), function (x)
-		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
-
-		// Return a new FirebaseSnapshot @ [childPath]
-		return new FirebaseSnapshot(_child, url + '/' + childPath);
-	};
-
-	/*
-	 * Iterate over [children] by [priority]
-	 *
-	 **************************************************************************/
-	my.forEach = function (childAction)
-	{
-		// Safety Net
-		if (! _.isFunction(childAction) || ! _.isObject(data) || ! data.childrenCount) {return;}
-
-		// Prepare the handbrake
-		var _stop = false;
-
-		// Iterate over the [keys] of [data].[value] by [priority]
-		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || data.value[key].name}), function (key)
-		{
-			_stop = (_stop || childAction(my.child(key)) === true);
-		});
-
-		return (_stop);
-	};
-
-	/*
-	 * Return a new Firebase for [url]
-	 *
-	 **************************************************************************/
-	my.hasChild = function (childPath)
-	{
-		// Safety Net & Simple Fail
-		if (! _.isString(childPath) || ! my.hasChildren()) {return false;}
-
-		// Clean the input (remove leading slash)
-		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
-
-		// Initialize the [child]
-		var _child = data;
-
-		// Walk through the [childPath]
-		_.each(childPath.split('/'), function (x)
-		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
-
-		// Return a new FirebaseSnapshot @ [childPath]
-		return (! _.isNull(_child));
-	};
-
-	/*
-	 * Evalute [data].[childrenCount] as BOOLEAN
-	 *
-	 **************************************************************************/
-	my.hasChildren = function () {return (_.isObject(data) && data.childrenCount ? true : false);};
-
-	/*
-	 * Return the [data].[name]
-	 *
-	 **************************************************************************/
-	my.name = function ()
-	{
-		// Simple Safety Net (already at the top)
-		if (! url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
-
-		// Pop the [child] off and you have the [name]
-		return url.replace(/^https\:\/\/[\S]+\/([^\/]+)[\/]?/i, "$1");
-	};
-
-	/*
-	 * Evalute [data].[childrenCount] as INT
-	 *
-	 **************************************************************************/
-	my.numChildren = function () {return (_.isObject(data) ? data.childrenCount : 0);};
-
-	/*
-	 * Return a new Firebase for [url]
-	 *
-	 **************************************************************************/
-	my.ref = function () {return exports.new(url);};
-
-	/*
-	 * Return [data].[getPriority] or NULL
-	 *
-	 **************************************************************************/
-	my.getPriority = function () {return (_.isObject(data) ? data.priority : null);};
-
-	/*
-	 * Return a simple Object version of [data].[value]
-	 *
-	 **************************************************************************/
-	my.exportVal = function () {return FirebaseData(data);};
-
-	return my;
-};
-
-/*
  * Public API Endpoint for Backbone Sync Adapter
  *
  * 	Extend the MODEL
@@ -1066,6 +916,162 @@ exports.setupCollection = function (Collection)
 	});
 
 	return Collection;
+};
+
+/*
+ * Firebase Snapshot/Data Converter
+ */
+function FirebaseData (data, priority)
+{
+	if (! _.isObject(data) || _.isNull(data)) {return null;}
+
+	// No [children], just return [value] OR [value] w/[priority]
+	if (! data.childrenCount) {return (! priority || priority && ! data.priority ? data.value : {'.priority' : data.priority, '.value' : data.value});}
+
+	// Initialize the [dictionary]
+	var dictionary = {};
+
+	// Recursively evaluate the [value] as a key:value tree
+	_.each(_.keys(data.value), function (key)
+	{
+		dictionary[key] = FirebaseData(data.value[key], priority);
+
+		// Transform w/[priority]
+		if (priority && data.value[key].priority)
+		{
+			_.extend(dictionary[key], {'.priority' : data.value[key].priority});
+		}
+	});
+
+	return dictionary;
+}
+
+/*
+ * Firebase Snapshot Object
+ *
+ ******************************************************************************/
+function FirebaseSnapshot (data, url)
+{
+	// The export
+	var my = {};
+
+	/*
+	 * Return a simple Object version of [data].[value]
+	 *
+	 **************************************************************************/
+	my.val = function () {return FirebaseData(data);};
+
+	/*
+	 * Return a new FirebaseSnapshot @ [childPath]
+	 *
+	 **************************************************************************/
+	my.child = function (childPath)
+	{
+		// Safety Net
+		if (! _.isString(childPath)) {return null;}
+
+		// Clean the input (remove leading slash)
+		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
+
+		// Initialize the [child]
+		var _child = data;
+
+		// Walk through the [childPath]
+		_.each(childPath.split('/'), function (x)
+		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
+
+		// Return a new FirebaseSnapshot @ [childPath]
+		return new FirebaseSnapshot(_child, url + '/' + childPath);
+	};
+
+	/*
+	 * Iterate over [children] by [priority]
+	 *
+	 **************************************************************************/
+	my.forEach = function (childAction)
+	{
+		// Safety Net
+		if (! _.isFunction(childAction) || ! _.isObject(data) || ! data.childrenCount) {return;}
+
+		// Prepare the handbrake
+		var _stop = false;
+
+		// Iterate over the [keys] of [data].[value] by [priority]
+		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || data.value[key].name}), function (key)
+		{
+			_stop = (_stop || childAction(my.child(key)) === true);
+		});
+
+		return (_stop);
+	};
+
+	/*
+	 * Return a new Firebase for [url]
+	 *
+	 **************************************************************************/
+	my.hasChild = function (childPath)
+	{
+		// Safety Net & Simple Fail
+		if (! _.isString(childPath) || ! my.hasChildren()) {return false;}
+
+		// Clean the input (remove leading slash)
+		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
+
+		// Initialize the [child]
+		var _child = data;
+
+		// Walk through the [childPath]
+		_.each(childPath.split('/'), function (x)
+		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
+
+		// Return a new FirebaseSnapshot @ [childPath]
+		return (! _.isNull(_child));
+	};
+
+	/*
+	 * Evalute [data].[childrenCount] as BOOLEAN
+	 *
+	 **************************************************************************/
+	my.hasChildren = function () {return (_.isObject(data) && data.childrenCount ? true : false);};
+
+	/*
+	 * Return the [data].[name]
+	 *
+	 **************************************************************************/
+	my.name = function ()
+	{
+		// Simple Safety Net (already at the top)
+		if (! url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
+
+		// Pop the [child] off and you have the [name]
+		return url.replace(/^https\:\/\/[\S]+\/([^\/]+)[\/]?/i, "$1");
+	};
+
+	/*
+	 * Evalute [data].[childrenCount] as INT
+	 *
+	 **************************************************************************/
+	my.numChildren = function () {return (_.isObject(data) ? data.childrenCount : 0);};
+
+	/*
+	 * Return a new Firebase for [url]
+	 *
+	 **************************************************************************/
+	my.ref = function () {return exports.new(url);};
+
+	/*
+	 * Return [data].[getPriority] or NULL
+	 *
+	 **************************************************************************/
+	my.getPriority = function () {return (_.isObject(data) ? data.priority : null);};
+
+	/*
+	 * Return a simple Object version of [data].[value] w/[priority] notations
+	 *
+	 **************************************************************************/
+	my.exportVal = function () {return FirebaseData(data, true);};
+
+	return my;
 };
 
 /*
