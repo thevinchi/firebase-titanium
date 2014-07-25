@@ -257,7 +257,6 @@ Firebase.prototype.setPriority = function (priority, onComplete)
  * Atomically modify the data at this Firebase location
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- *	- TODO: verify whether updateFunction receives a snapshot object or not...
  */
 Firebase.prototype.transaction = function (updateFunction, onComplete, applyLocally)
 {
@@ -299,6 +298,28 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 	);
 
 	return this;
+};
+
+/*
+ * Manually disconnect the Firebase client(s)
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-25)
+ */
+Firebase.prototype.goOffline = function ()
+{
+	// Kick the Firebase
+	this.firebase.goOffline();
+};
+
+/*
+ * Manually reconnect the Firebase client(s)
+ *
+ * 	- Matches Firebase Library (VS: 2014-07-25)
+ */
+Firebase.prototype.goOnline = function ()
+{
+	// Kick the Firebase
+	this.firebase.goOnline();
 };
 
 /*

@@ -364,6 +364,24 @@
 }
 
 /**
+ * Manually disconnect the Firebase
+ */
+- (void)goOffline: (id)args
+{
+	// Kick the Firebase
+	[Firebase goOffline];
+}
+
+/**
+ * Manually re-connect the Firebase
+ */
+- (void)goOnline: (id)args
+{
+	// Kick the Firebase
+	[Firebase goOnline];
+}
+
+/**
  * Create a Firebase [listener] and return a [handle]
  *
  *	- args[0] - (NSString) the URL for Firebase Reference
