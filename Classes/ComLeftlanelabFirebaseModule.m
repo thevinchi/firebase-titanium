@@ -336,23 +336,29 @@
 	// Argument Filter
 	if (! _url || ! _updateFunction) {return;}
 
-	// Kick the Firebase
-	[[[Firebase alloc] initWithUrl:_url] runTransactionBlock:^FTransactionResult *(FMutableData *currentData)
-	{
-		// Execute [updateFunction] callback
-		NSLog(@"[INFO] Return from updateFunction: %@", currentData.value);
+	NSLog(@"[INFO] Running Transaction on: %@", _url);
 
-//		currentData.value = [_updateFunction call:@[currentData.value] thisObject:nil];
-		//FTransactionResult *_result = [_updateFunction call:@[currentData] thisObject:nil];
+	// Kick the Firebase
+	[[[[Firebase alloc] autorelease] initWithUrl:_url] runTransactionBlock:^FTransactionResult *(FMutableData *currentData)
+	{
+		// Load the [payload] with the [updateFunction]
+		NSDictionary *_payload = [NSDictionary dictionaryWithDictionary:[_updateFunction call:@[[self FMutableDataSpider:currentData]] thisObject:nil]];
+		
+		// Validate the [payload]
+		if (_payload[@".priority"] && _payload[@".value"])
+		{
+			// Update [currentData] from [payload]
+			currentData.priority = ([_payload[@".priority"] isKindOfClass:[NSString class]] || [_payload[@".priority"] isKindOfClass:[NSNumber class]] ? _payload[@".priority"] : currentData.priority);
+			currentData.value = _payload[@".value"];
+		}
 
 		return [FTransactionResult successWithValue:currentData];
 	}
-
-	andCompletionBlock:^(NSError *error, BOOL committed, FDataSnapshot *snapshot)
+	// Execute [onComplete] callback
+	andCompletionBlock:(! _onComplete ? nil : ^(NSError *error, BOOL committed, FDataSnapshot *snapshot)
 	{
-
-		
-	}
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc]), [NSNumber numberWithBool:committed], [self FDataSnapshotSpider:snapshot]] thisObject:nil];
+	})
 
 	withLocalEvents:_applyLocally];
 }
@@ -521,4 +527,40 @@
 	return payload;
 }
 
+-(id)FMutableDataSpider: (FMutableData*)data
+{
+	// Initialize the [payload]
+	NSMutableDictionary *payload = [NSMutableDictionary dictionary];
+	
+	[payload setObject:(data.name ? data.name : @"root") forKey:@"name"];
+	[payload setObject:data.priority forKey:@"priority"];
+	[payload setObject:[NSNumber numberWithInteger:data.childrenCount] forKey:@"childrenCount"];
+
+	// Check if [value] is an ARRAY
+	if ([data.value isKindOfClass:[NSArray class]])
+	{
+		[payload setObject:data.value forKey:@"value"];
+		[payload setObject:[NSNumber numberWithInteger:0] forKey:@"childrenCount"];
+	}
+
+	// Use [children] to set [value] w/Priority
+	else if (data.hasChildren)
+	{
+		// Initialize the [children]
+		NSMutableDictionary *children = [NSMutableDictionary dictionary];
+
+		for (FMutableData *child in data.children)
+		{
+			[children setObject:[self FMutableDataSpider:child] forKey:child.name];
+		}
+
+		[payload setObject:children forKey:@"value"];
+	}
+
+	// No [children]
+	else
+	{[payload setObject:data.value forKey:@"value"];}
+	
+	return payload;
+}
 @end

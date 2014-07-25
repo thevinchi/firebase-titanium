@@ -270,7 +270,21 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 		// Exectute the [updateFunction]
 		function (currentData)
 		{
-			return updateFunction(currentData);
+			// Preserve the [priority] of the root node
+			var _priority = currentData.priority;
+
+			// Run the [updateFunction] over [currentData] as simple Object
+			currentData = updateFunction(FirebaseData(currentData));
+
+			// Return [currentData] as [priority]/[value] to Firebase
+			return (_.isObject(currentData) && ! _.isUndefined(currentData['.priority']) && ! _.isUndefined(currentData['.value'])
+
+				// [priority] and [value] already seperated by [updateFunction]
+				? currentData
+
+				// Include preserved [priority] w/[value]
+				: {'.priority' : _priority, '.value' : currentData}
+			);
 		},
 
 		// Set the [applyLocally] flag to allow/suppress event triggers
@@ -278,10 +292,10 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 		(_.isBoolean(applyLocally) ? applyLocally : true),
 
 		// Attach the [onComplete] callback (if supplied)
-		(! _.isFunction(onComplete) ? null : function (error)
+		(! _.isFunction(onComplete) ? null : _.bind(function (error, committed, data)
 		{
-			onComplete(error);
-		})
+			onComplete(error, committed, new FirebaseSnapshot(data, this.url));
+		}, this))
 	);
 
 	return this;
@@ -628,7 +642,6 @@ console.log('Backbone: deleting (NOT CONFIGURED)');
 
 /*
  * Firebase Snapshot Converter
- */
 function FirebaseSnapshot (snapshot)
 {
 	if (! _.isObject(snapshot)) {return false;}
@@ -658,6 +671,156 @@ function FirebaseSnapshot (snapshot)
 
 	return dictionary;
 }
+
+/*
+ * Firebase MutableData Converter
+ */
+function FirebaseData (data)
+{
+	if (! _.isObject(data) || _.isNull(data)) {return null;}
+
+	// No [children], just return [value]
+	if (! data.childrenCount) {return data.value;}
+
+	// Initialize the [dictionary]
+	var dictionary = {};
+
+	// Recursively evaluate the [value] as a key:value tree
+	_.each(_.keys(data.value), function (key)
+	{
+		dictionary[key] = FirebaseData(data.value[key]);
+	});
+
+	return dictionary;
+}
+
+/*
+ * Firebase Snapshot Object
+ *
+ ******************************************************************************/
+function FirebaseSnapshot (data, url)
+{
+	// The export
+	var my = {};
+
+	/*
+	 * Return a simple Object version of [data].[value]
+	 *
+	 **************************************************************************/
+	my.val = function () {return FirebaseData(data);};
+
+	/*
+	 * Return a new FirebaseSnapshot @ [childPath]
+	 *
+	 **************************************************************************/
+	my.child = function (childPath)
+	{
+		// Safety Net
+		if (! _.isString(childPath)) {return null;}
+
+		// Clean the input (remove leading slash)
+		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
+
+		// Initialize the [child]
+		var _child = data;
+
+		// Walk through the [childPath]
+		_.each(childPath.split('/'), function (x)
+		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
+
+		// Return a new FirebaseSnapshot @ [childPath]
+		return new FirebaseSnapshot(_child, url + '/' + childPath);
+	};
+
+	/*
+	 * Iterate over [children] by [priority]
+	 *
+	 **************************************************************************/
+	my.forEach = function (childAction)
+	{
+		// Safety Net
+		if (! _.isFunction(childAction) || ! _.isObject(data) || ! data.childrenCount) {return;}
+
+		// Prepare the handbrake
+		var _stop = false;
+
+		// Iterate over the [keys] of [data].[value] by [priority]
+		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || data.value[key].name}), function (key)
+		{
+			_stop = (_stop || childAction(my.child(key)) === true);
+		});
+
+		return (_stop);
+	};
+
+	/*
+	 * Return a new Firebase for [url]
+	 *
+	 **************************************************************************/
+	my.hasChild = function (childPath)
+	{
+		// Safety Net & Simple Fail
+		if (! _.isString(childPath) || ! my.hasChildren()) {return false;}
+
+		// Clean the input (remove leading slash)
+		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
+
+		// Initialize the [child]
+		var _child = data;
+
+		// Walk through the [childPath]
+		_.each(childPath.split('/'), function (x)
+		{_child = (_.isObject(_child) && ! _.isUndefined(_child.value[x]) ? _child.value[x] : null);});
+
+		// Return a new FirebaseSnapshot @ [childPath]
+		return (! _.isNull(_child));
+	};
+
+	/*
+	 * Evalute [data].[childrenCount] as BOOLEAN
+	 *
+	 **************************************************************************/
+	my.hasChildren = function () {return (_.isObject(data) && data.childrenCount ? true : false);};
+
+	/*
+	 * Return the [data].[name]
+	 *
+	 **************************************************************************/
+	my.name = function ()
+	{
+		// Simple Safety Net (already at the top)
+		if (! url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
+
+		// Pop the [child] off and you have the [name]
+		return url.replace(/^https\:\/\/[\S]+\/([^\/]+)[\/]?/i, "$1");
+	};
+
+	/*
+	 * Evalute [data].[childrenCount] as INT
+	 *
+	 **************************************************************************/
+	my.numChildren = function () {return (_.isObject(data) ? data.childrenCount : 0);};
+
+	/*
+	 * Return a new Firebase for [url]
+	 *
+	 **************************************************************************/
+	my.ref = function () {return exports.new(url);};
+
+	/*
+	 * Return [data].[getPriority] or NULL
+	 *
+	 **************************************************************************/
+	my.getPriority = function () {return (_.isObject(data) ? data.priority : null);};
+
+	/*
+	 * Return a simple Object version of [data].[value]
+	 *
+	 **************************************************************************/
+	my.exportVal = function () {return FirebaseData(data);};
+
+	return my;
+};
 
 /*
  * Public API Endpoint for Backbone Sync Adapter
@@ -930,4 +1093,4 @@ function ua(a){var b=q(a);if(!("array"==b||"object"==b&&"number"==typeof a.lengt
 X.prototype.M=function(a,b){x("FirebaseTokenGenerator.createToken",2,arguments.length);if(void 0!==b&&(b==k||"object"!=typeof b))throw Error(ca("FirebaseTokenGenerator.createToken",2,!0)+"must be a dictionary of token options.");b=b||{};if(va(a)&&va(b))throw Error("FirebaseTokenGenerator.createToken: data is empty and no options are set.  This token will have no effect on Firebase.");var c=b,d={};for(o in c)switch(o){case "expires":N(c[o],"number","a number.");d.exp=c[o];break;case "notBefore":N(c[o],
 "number","a number.");d.nbf=c[o];break;case "admin":N(c[o],"boolean","a boolean.");d.admin=c[o];break;case "debug":N(c[o],"boolean","a boolean.");d.debug=c[o];break;case "simulate":N(c[o],"boolean","a boolean.");d.simulate=c[o];break;default:throw Error("FirebaseTokenGenerator.createToken unrecognized option: "+o);}d.v=0;d.iat=Math.floor((new Date).getTime()/1E3);d.d=a;for(var c=wa(w({typ:"JWT",alg:"HS256"})),d=wa(w(d)),e=z.u(c+"."+d,this.O).toString(),f=[],g=0;g<e.length;g+=2)f.push(parseInt(e.substr(g,
 2),16));e=ua(f);e=xa(e);return c+"."+d+"."+e};X.prototype.createToken=X.prototype.M;function wa(a){for(var b=[],c=0,d=0;d<a.length;d++){var e=a.charCodeAt(d);55296<=e&&56319>=e&&(e-=55296,d++,r.L.Q.assert(d<a.length,"Surrogate pair missing trail surrogate."),e=65536+(e<<10)+(a.charCodeAt(d)-56320));128>e?b[c++]=e:(2048>e?b[c++]=e>>6|192:(65536>e?b[c++]=e>>12|224:(b[c++]=e>>18|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}a=ua(b);return xa(a)}
-function xa(a){var b=a.indexOf(".");return 0<=b?a.substring(0,b):a}function va(a){if("object"!==typeof a)return m;if(a===k)return!0;for(var b in a)if(Object.prototype.hasOwnProperty.call(a,b))return m;return!0};})();
+function xa(a){var b=a.indexOf(".");return 0<=b?a.substring(0,b):a}function va(a){if("object"!==typeof a)return m;if(a===k)return!0;for(var b in a)if(Object.prototype.hasOwnProperty.call(a,b))return m;return!0};}());
