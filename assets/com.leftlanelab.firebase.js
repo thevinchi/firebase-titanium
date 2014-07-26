@@ -3,7 +3,14 @@
  */
 
 /*
- * Public API Endpoint for getting a [firebase] reference
+ * Chain.js (chainify)
+ *
+ * Source: http://mstumpp.github.io/chain.js/
+ ******************************************************************************/
+//eval(function(p,a,c,k,e,r){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a)>35?String.fromCharCode(c+29):c.toString(36))};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('5 E(m){8 n=5(){};n.6.H=5(){7 2.q()};n.6.O=5(e,g){4(!e)R x L(\'I a 5 K F Q.\');8 h;4(!2.G(\'3\')){h={C:2,p:u,X:D,9:[]}}A{h=2.3}8 f=5(){};f.6=h.C.w.6;f.6.w=f;8 i=5(a,b,c,d){2.z=a;2.y=b;2.t=c;2.3=d};i.6=x f();i.6.w=i;8 j=u;8 k=u;4(g){j=g;4(g.r>0){4(J g[g.r-1]===\'5\'){k=g[g.r-1]}}}8 l=x i(e,j,k,h);l.3.9.M(l);l.3.p=N(5(){l.q()},1);7 l};n.6.q=5(){8 b=2;4(!2.3)7 2;4(2.3.p)v(2.3.p);4(2.3.9.r>0){8 c=2.3.9.P();8 d=2;d.B=5(){4(c.t){8 a=2;a.B=5(){b.q.s(b)};c.t.s(a)}A{b.q.s(b)}};c.z.s(d,c.y)}7 2};n.6.S=5(){4(!2.3)7 2;4(2.3.p)v(2.3.p);4(2.3.9)2.3.9.r=0;7 2};n.6.T=5(){4(!2.3)7 2;4(2.3.p)v(2.3.p);7 2};n.6.U=5(){4(!2.3)7[];4(2.3.9)7 2.3.9;7[]};n.6.V=5(){4(!2.3)7[];4(2.3.9)7 2.3.9;7[]};W(8 o Y n.6)m.6[o]=n.6[o];7 m}',61,61,'||this|manager|if|function|prototype|return|var|queue||||||||||||||||timerId|c_process|length|apply|cb|null|clearTimeout|constructor|new|args|func|else|c_next|base|false|chainify|be|hasOwnProperty|exec|Provide|typeof|to|Error|push|setTimeout|c_chain|shift|chained|throw|c_clear|c_delay|c_getSuccessors|c_getPredecessors|for|executing|in'.split('|'),0,{}))
+
+/*
+ * Public API Endpoint for getting a [Firebase] reference
  */
 exports.new = function (url)
 {
@@ -25,7 +32,7 @@ exports.token = function (payload, options, secret)
 };
 
 /*
- * Local Firebase API interface class
+ * Local Firebase API interface object
  */
 function Firebase (url, module)
 {
@@ -42,9 +49,18 @@ function Firebase (url, module)
 	// Set the [url] (allows for absolute &| empty [forge]), then strip trailing "/" for the sloppy types...
 	this.url = (! _.isUndefined(url) && url.indexOf('https://') === 0 ? url : (this.forge || '') + (url || '')).replace(/^https\:\/\/([\S]+[^\/])[\/]?/i, "https://$1");
 
+	// Register the new [instance] of [url]
+	this.instance = this.instances.next++;
+
 	// Return the new [Firebase] pseudo-reference
 	return this;
 }
+
+/*
+ * Firebase instance management object
+ *
+ ******************************************************************************/
+Firebase.prototype.instances = {'next' : 0};
 
 /*
  * Authenticates a Firebase client
@@ -275,6 +291,9 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 			// Run the [updateFunction] over [currentData] as simple Object
 			currentData = updateFunction(FirebaseData(currentData));
 
+			// Cancelled / Aborting Transaction
+			if (_.isUndefined(currentData)) {return;}
+
 			// Return [currentData] as [priority]/[value] to Firebase
 			return (_.isObject(currentData) && ! _.isUndefined(currentData['.priority']) && ! _.isUndefined(currentData['.value'])
 
@@ -426,8 +445,130 @@ Firebase.prototype.off = function (type, handle)
 };
 
 /*
+ * Return a new FirebaseQuery limited to the specified number of children
+ *
+ ******************************************************************************/
+Firebase.prototype.limit = function (limit)
+{
+	return new FirebaseQuery (this.url, this.firebase).limit(limit);
+};
+
+/*
+ * Return a new FirebaseQuery with the specified starting point
+ *
+ ******************************************************************************/
+Firebase.prototype.startAt = function (priority, name)
+{
+	return new FirebaseQuery (this.url, this.firebase).startAt(priority, name);
+};
+
+/*
+ * Return a new FirebaseQuery with the specified ending point
+ *
+ ******************************************************************************/
+Firebase.prototype.endAt = function (priority, name)
+{
+	return new FirebaseQuery (this.url, this.firebase).endAt(priority, name);
+};
+
+/*
+ * Local FirebaseQuery API interface object
+ *
+ * 	- expects to be created from an existing [Firebase] object instance
+ ******************************************************************************/
+function FirebaseQuery (url, module)
+{
+	// Safety Net
+	if (! _.isString(url) || ! _.isObject(module)) {return false;}
+
+	// Global Variables
+	this.firebase = module;
+	this.url = url;
+	this.listeners = {};
+	this.query = {};
+
+	// Register the new [instance]
+	this.instance = this.instances.next++;
+
+	// Return the new [FirebaseQuery] pseudo-reference
+	return this;
+}
+
+/*
+ * FirebaseQuery instance manager
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.instances = {'next' : 0};
+
+/*
+ * Generate a new Query limited to the specified number of children
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.limit = function (limit)
+{
+	// Safety Net
+	if (! _.isNumber(limit)) {throw Error ('Query.limit: Invalid arguments');}
+
+	// Only allow 2 Query Constructs
+	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Register the [query] element
+	this.query['limit'] = true;
+
+	console.log('limiting by ', limit);
+
+	return this;
+};
+
+/*
+ * Generate a new Query with the specified starting point
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.startAt = function (priority, name)
+{
+	// Safety Net
+	if (! _.isUndefined(priority) && ! _.isNumber(priority) && ! _.isString(priority)) {throw Error ('Query.startAt: Invalid priority');}
+	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.startAt: Invalid name');}
+
+	// Only allow 2 Query elements
+	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Register the query element
+	this.query['startAt'] = true;
+
+	console.log('starting at ', priority, name);
+
+	return this;
+};
+
+/*
+ * Generate a new Query with the specified ending point
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.endAt = function (priority, name)
+{
+	// Safety Net
+	if (! _.isUndefined(priority) && ! _.isNumber(priority) && ! _.isString(priority)) {throw Error ('Query.endAt: Invalid priority');}
+	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.endAt: Invalid name');}
+
+	// Only allow 2 Query elements
+	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Register the query element
+	this.query['endAt'] = true;
+
+	console.log('ending at ', priority, name);
+};
+
+/*
+===============================================================================>
+	Backbone Sync Adapter
+===============================================================================>
+*/
+/*
  * Public API Endpoint for Backbone Sync Adapter
- */
+ *
+ ******************************************************************************/
 exports.sync = function (method, model, options)
 {
 	// Safety Net
@@ -660,38 +801,6 @@ console.log('Backbone: deleting (NOT CONFIGURED)');
 
 	return true;
 };
-
-/*
- * Firebase Snapshot Converter
-function FirebaseSnapshot (snapshot)
-{
-	if (! _.isObject(snapshot)) {return false;}
-
-	// No [children] && No [priority]
-	if (! snapshot.childrenCount)
-	{return {'data':snapshot.value, 'priority':(! _.isNull(snapshot.priority) ? snapshot.priority : null)};}
-
-	// Initialize the [dictionary]
-	var dictionary = {
-		'data' : {},
-		'priority' : {}
-	};
-
-	// Recursively evaluate the [value] as a key:value tree
-	_.each(_.keys(snapshot.value), function (key)
-	{
-		var payload = FirebaseSnapshot(snapshot.value[key]);
-
-		dictionary.data[key] = payload.data;
-		dictionary.priority[key] = payload.priority;
-	});
-
-	// Set the [priority] (if applicable)
-	if (_.isEmpty(dictionary.priority) && ! _.isNull(snapshot.priority))
-	{dictionary.priority[snapshot.name] = snapshot.priority;}
-
-	return dictionary;
-}
 
 /*
  * Public API Endpoint for Backbone Sync Adapter
@@ -940,8 +1049,15 @@ exports.setupCollection = function (Collection)
 };
 
 /*
- * Firebase Snapshot/Data Converter
- */
+===============================================================================>
+	Shared Utility Functions
+===============================================================================>
+*/
+
+/*
+ * Firebase Snapshot->Data Recursion Tool
+ *
+ ******************************************************************************/
 function FirebaseData (data, priority)
 {
 	if (! _.isObject(data) || _.isNull(data)) {return null;}
@@ -949,15 +1065,15 @@ function FirebaseData (data, priority)
 	// No [children], just return [value] OR [value] w/[priority]
 	if (! data.childrenCount) {return (! priority || priority && ! data.priority ? data.value : {'.priority' : data.priority, '.value' : data.value});}
 
-	// Initialize the [dictionary]
-	var dictionary = {};
+	// Initialize the [dictionary] OR [dictionary] w/[priority]
+	var dictionary = (! priority || ! data.priority ? {} : {'.priority' : data.priority});
 
 	// Recursively evaluate the [value] as a key:value tree
 	_.each(_.keys(data.value), function (key)
 	{
 		dictionary[key] = FirebaseData(data.value[key], priority);
 
-		// Transform w/[priority]
+		// Inject [priority]
 		if (priority && data.value[key].priority)
 		{
 			_.extend(dictionary[key], {'.priority' : data.value[key].priority});
@@ -1018,7 +1134,7 @@ function FirebaseSnapshot (data, url)
 		var _stop = false;
 
 		// Iterate over the [keys] of [data].[value] by [priority]
-		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || data.value[key].name}), function (key)
+		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || 0;}), function (key)
 		{
 			_stop = (_stop || childAction(my.child(key)) === true);
 		});

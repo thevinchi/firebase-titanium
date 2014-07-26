@@ -343,16 +343,19 @@
 	{
 		// Load the [payload] with the [updateFunction]
 		NSDictionary *_payload = [NSDictionary dictionaryWithDictionary:[_updateFunction call:@[[self FMutableDataSpider:currentData]] thisObject:nil]];
-		
-		// Validate the [payload]
+
+		// Validate the [payload] and Commit Transaction
 		if (_payload[@".priority"] && _payload[@".value"])
 		{
 			// Update [currentData] from [payload]
-			currentData.priority = ([_payload[@".priority"] isKindOfClass:[NSString class]] || [_payload[@".priority"] isKindOfClass:[NSNumber class]] ? _payload[@".priority"] : currentData.priority);
 			currentData.value = _payload[@".value"];
+			currentData.priority = ([_payload[@".priority"] isKindOfClass:[NSString class]] || [_payload[@".priority"] isKindOfClass:[NSNumber class]] ? _payload[@".priority"] : currentData.priority);
+
+			return [FTransactionResult successWithValue:currentData];
 		}
 
-		return [FTransactionResult successWithValue:currentData];
+		// Abort Transaction
+		return [FTransactionResult abort];
 	}
 	// Execute [onComplete] callback
 	andCompletionBlock:(! _onComplete ? nil : ^(NSError *error, BOOL committed, FDataSnapshot *snapshot)
