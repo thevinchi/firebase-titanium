@@ -13,8 +13,10 @@
 
 @synthesize url;
 @synthesize gInstances;
+@synthesize gQuery;
 @synthesize gEventTypes;
 @synthesize gListeners;
+@synthesize gQueryListeners;
 
 #pragma mark Internal
 
@@ -43,6 +45,9 @@
 
     // Initialize [gInstances]
     self.gInstances = [NSMutableDictionary dictionary];
+
+    // Initialize [gQuery]
+    self.gQuery = [NSMutableDictionary dictionary];
 
     // Initialize [gListeners]
     self.gListeners = [NSMutableDictionary dictionary];
@@ -417,6 +422,7 @@
 	if (! self.gInstances[_url])
 	{
 		[self.gInstances setObject:[[Firebase alloc] initWithUrl:_url] forKey:_url];
+		NSLog(@"[INFO] Set Instance: %@", self.gInstances[_url]);
 		[self.gListeners setObject:[NSMutableDictionary dictionary] forKey:_url];
 	}
 
@@ -506,6 +512,204 @@
 		[self.gInstances removeObjectForKey:_url];
 
 		NSLog(@"[INFO] Released Instance (%@)", _url);
+	}
+}
+
+/**
+ * Create a listener for a [gQuery] instance
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSString) Event Type to listen for
+ *  - args[2] - (KrollCallback) callback
+ *  - args[2] - (KrollCallback) cancelCallback
+ *
+ */
+-(id)queryOn: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSString *_type = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	KrollCallback *_callback = ([args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+	KrollCallback *_cancelCallback = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _id || ! _type || ! _callback) {return;}
+
+	// Search for [type] in [gEventTypes]
+	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
+	if (_search == NSNotFound) {return;}
+
+	// Initialize [event] from [search]
+	int* _event = _search;
+
+	// Verify a [gQuery] already exists for this [id]
+	if (! self.gQuery[_id]) {return;}
+	
+	// Set the [handle] while creating a [listener]
+	FirebaseHandle _handle = [self.gQuery[_id] observeEventType:_event andPreviousSiblingNameWithBlock:^(FDataSnapshot *_snapshot, NSString *_prevName)
+	{
+		// Execute [callback]
+		[_callback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+	}
+
+	// Execute [cancelCallback] callback
+	withCancelBlock:(! _cancelCallback ? nil : ^(NSError *error)
+	{
+		[_cancelCallback call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+
+	// Initialize the [key] for [handle]
+	NSNumber *_key = [NSNumber numberWithInteger:_handle];
+
+	// Initialize the [gQueryListener] for this [gQuery]
+	if (! self.gQueryListeners[_id])
+	{
+		[self.gQueryListeners setObject:[NSMutableDictionary dictionary] forKey:_id];
+	}
+
+	// Save the [handle] in [gQueryListeners]
+	[self.gQueryListeners[_id] setObject:_key forKey:_key];
+
+	// Return the [key] for future reference
+	return _key;
+}
+
+/**
+ * Remove a listener from a [gQuery] instance
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSNumber) Key to [gQueryListeners] for [handle]
+*
+ */
+-(id)queryOff: (id)args
+{
+    if (! [args count] > 1) {return;}
+
+	// Initialize the [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSNumber *_handle = ([args[1] isKindOfClass:[NSNumber class]] ? args[1] : nil);
+
+	// Argument Filter
+	if (! _id || ! _handle) {return;}
+
+	// Validate [gQuery] && [gQueryListeners]
+	if (! self.gQuery[_id] || ! self.gQueryListeners[_id] || ! self.gQueryListeners[_id][_handle]) {return;}
+
+	// Remove the listener by [handle] from [gQuery]
+	[self.gQuery[_id] removeObserverWithHandle:[self.gQueryListeners[_id][_handle] integerValue]];
+
+	// Remove the [handle] from [gQueryListeners]
+	[self.gQueryListeners[_id] removeObjectForKey:_handle];
+
+	// Release [gQueryListeners].[id] if this is the last [gQueryListener]
+	if (! [self.gQueryListeners[_id] count])
+	{
+		[self.gQueryListeners removeObjectForKey:_id];
+	}
+}
+
+/**
+ * Limit a [gQuery] to a specified number of children.
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSString) the URL for the Firebase Reference
+ *	- args[2] - (NSNumber) the limit
+ *
+ */
+-(void)limit: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSString *_url = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	NSNumber *_limit = ([args[2] isKindOfClass:[NSNumber class]] ? args[2] : nil);
+
+	// Argument Filter
+	if (! _id || ! _url || ! _limit) {return;}
+
+	// Initialize [gQuery] for [id] (only done once p/[id])
+	if (! self.gQuery[_id])
+	{
+		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryLimitedToNumberOfChildren:[_limit integerValue]] forKey:_id];
+	}
+
+	// Update existing [gQuery] reference
+	else
+	{
+		[self.gQuery setObject:[self.gQuery[_id] queryLimitedToNumberOfChildren:[_limit integerValue]] forKey:_id];
+	}
+}
+
+/**
+ * Set a [gQuery] to the specified starting point
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSString) the URL for the Firebase Reference
+ *	- args[2] - (NSNull || NSString || NSNumber) the priority
+ *	- args[3] - (NSString) the childName
+ *
+ */
+-(void)startAt: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the SIMPLE [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSString *_url = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	id _priority = ([args[2] isKindOfClass:[NSNull class]] || [args[2] isKindOfClass:[NSNumber class]] || [args[2] isKindOfClass:[NSString class]] ? args[2] : nil);
+	NSString *_childName = ([args count] > 3 && [args[3] isKindOfClass:[NSString class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _id || ! _url) {return;}
+
+	// Initialize [gQuery] for [id] (only done once p/[id])
+	if (! self.gQuery[_id])
+	{
+		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryStartingAtPriority:_priority andChildName:_childName] forKey:_id];
+	}
+
+	// Update existing [gQuery] reference
+	else
+	{
+		[self.gQuery setObject:[self.gQuery[_id] queryStartingAtPriority:_priority andChildName:_childName] forKey:_id];
+	}
+}
+
+/**
+ * Set a [gQuery] to the specified ending point
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSString) the URL for the Firebase Reference
+ *	- args[2] - (NSNull || NSString || NSNumber) the priority
+ *	- args[3] - (NSString) the childName
+ *
+ */
+-(void)endAt: (id)args
+{
+    if (! [args count] > 2) {return;}
+	
+	// Initialize the SIMPLE [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSString *_url = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	id _priority = ([args[2] isKindOfClass:[NSNull class]] || [args[2] isKindOfClass:[NSNumber class]] || [args[2] isKindOfClass:[NSString class]] ? args[2] : nil);
+	NSString *_childName = ([args count] > 3 && [args[3] isKindOfClass:[NSString class]] ? args[3] : nil);
+	
+	// Argument Filter
+	if (! _id || ! _url) {return;}
+	
+	// Initialize [gQuery] for [id] (only done once p/[id])
+	if (! self.gQuery[_id])
+	{
+		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryEndingAtPriority:_priority andChildName:_childName] forKey:_id];
+	}
+	
+	// Update existing [gQuery] reference
+	else
+	{
+		[self.gQuery setObject:[self.gQuery[_id] queryEndingAtPriority:_priority andChildName:_childName] forKey:_id];
 	}
 }
 

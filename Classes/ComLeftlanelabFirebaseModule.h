@@ -11,7 +11,9 @@
 
 @property (nonatomic, retain) NSString * url;
 @property (nonatomic, retain) NSMutableDictionary * gInstances;
+@property (nonatomic, retain) NSMutableDictionary * gQuery;
 @property (nonatomic, retain) NSArray * gEventTypes;
 @property (nonatomic, retain) NSMutableDictionary * gListeners;
+@property (nonatomic, retain) NSMutableDictionary * gQueryListeners;
 
 @end

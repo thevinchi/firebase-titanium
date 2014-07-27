@@ -11,6 +11,7 @@
 
 /*
  * Public API Endpoint for getting a [Firebase] reference
+ *
  */
 exports.new = function (url)
 {
@@ -20,6 +21,7 @@ exports.new = function (url)
 
 /*
  * Public API Endpoint for getting a [firebase] token
+ *
  */
 exports.token = function (payload, options, secret)
 {
@@ -373,6 +375,7 @@ Firebase.prototype.once = function (type, callback, callbackContext)
 
 /*
  * Create a [listener] of [type]
+ *
  */
 Firebase.prototype.on = function (type, callback, callbackContext)
 {
@@ -474,7 +477,7 @@ Firebase.prototype.endAt = function (priority, name)
 /*
  * Local FirebaseQuery API interface object
  *
- * 	- expects to be created from an existing [Firebase] object instance
+ * 	- expects to be created from an existing [Firebase] instance
  ******************************************************************************/
 function FirebaseQuery (url, module)
 {
@@ -498,7 +501,121 @@ function FirebaseQuery (url, module)
  * FirebaseQuery instance manager
  *
  ******************************************************************************/
-FirebaseQuery.prototype.instances = {'next' : 0};
+FirebaseQuery.prototype.instances = {'next' : 1};
+
+/*
+ * Create a listener for data changes at this location.
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.on = function (eventType, callback, cancelCallback, context)
+{
+	// Safety Net
+	if (! _.isString(eventType)) {throw Error('Query.on: Invalid Arguments');}
+	if (! _.isFunction(callback)) {throw Error('Query.on: Invalid Arguments');}
+
+	// Require at least 1 Query element is already set
+	if (_.keys(this.query).length < 1) {throw Error ('Query.on: Must set startAt(), endAt(), or limit() first');}
+
+	// Initialize [listeners] collector for this [type]
+	if (_.isUndefined(this.listeners[eventType])) {this.listeners[eventType] = [];}
+
+	// Set the [listener], and save the [handle]
+	this.listeners[eventType].push({
+		'callback' : callback,
+		'handle' : this.firebase.queryOn(this.instance, eventType,
+
+			// Kroll Bridge Wrapper for [callback]
+			_.bind(function (data, prevChildName)
+			{
+				// Bind to [context] (if supplied)
+				if (_.isObject(context))
+				{_.bind(callback, context)(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+				// The context is not important
+				else
+				{callback(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+			}, this),
+
+			// Kroll Bridge Wrapper for [cancelCallback] (if supplied)
+			(! _.isFunction(cancelCallback) ? null : _.bind(function (error)
+			{
+				// Bind to [context] (if supplied)
+				if (_.isObject(context))
+				{_.bind(cancelCallback, context)(error);}
+
+				// The context is not important
+				else
+				{cancelCallback(error);}
+
+			}, this))
+		)
+	});
+
+	// Return the [callback] for future de-referencing purposes
+	return callback;
+};
+
+/*
+ * Remove listeners for data changes at this location.
+ *
+ * YOU ARE HERE!!!!!!!!!!!!!!!!!!!!!
+ ******************************************************************************/
+FirebaseQuery.prototype.off = function (eventType, callback, context)
+{
+	// Unregister ALL [listeners] OR all [listeners] for a [type]
+	if (_.isUndefined(eventType) || _.isUndefined(callback))
+	{
+		// Safety Net
+		if (_.isEmpty(this.listeners)) {return;}
+		if (! _.isUndefined(eventType) && (! _.isString(eventType) || _.isUndefined(this.listeners[eventType]))) {return;}
+
+		// Remove ALL [listeners]
+		_.each(_.keys(this.listeners), function (kType)
+		{
+			// Safety Net
+			if (_.isEmpty(this.listeners[kType])) {return;}
+
+			// Check for [type] filter
+			if (! _.isUndefined(eventType) && eventType != kType) {return;}
+
+			// Remove the [listener] from [Firebase]
+			_.each(this.listeners[kType], function (vListener)
+			{
+				this.firebase.queryOff(this.instance, vListener.handle);
+			}, this);
+		}, this);
+
+		// Clean the [listeners]
+		if (! _.isUndefined(eventType)) {_.omit(this.listeners, eventType);}
+		else {this.listeners = {};}
+
+		return;
+	}
+
+	// Safety Net
+	if (! _.isString(eventType) || ! _.isFunction(callback) || ! this.listeners[eventType]) {return false;}
+
+	// Ensure the [callback] is registered with [listeners]
+	if (! _.findWhere(this.listeners[eventType], {'callback' : callback}).length) {return false;}
+
+	// Remove the [listener] for [type]
+	this.firebase.queryOff(this.instance, _.findWhere(this.listeners[eventType], {'callback' : callback}).handle);
+
+	// Remove [callback] from [listeners] (only the first occurrence)
+	var done = false;
+	_.each(this.listeners[eventType], function (vListener, key)
+	{
+		if (! done && vListener.callback == callback)
+		{
+			done = true;
+			this.listeners[eventType].splice(key, 1);
+		}
+	});
+
+	// Remove [type] from [listeners] if EMPTY
+	if (! this.listeners[eventType].length) {_.omit(this.listeners, eventType);}
+};
 
 /*
  * Generate a new Query limited to the specified number of children
@@ -509,13 +626,17 @@ FirebaseQuery.prototype.limit = function (limit)
 	// Safety Net
 	if (! _.isNumber(limit)) {throw Error ('Query.limit: Invalid arguments');}
 
-	// Only allow 2 Query Constructs
+	// Only allow 2 Query elements
 	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Prevent Orphaned Query objects on the other side of the Kroll Bridge
+	if (_.keys(this.listeners).length) {throw Error ('Query.limit: query locked due to active listeners (use off() to remove listeners or create a new query object)');}
 
 	// Register the [query] element
 	this.query['limit'] = true;
 
-	console.log('limiting by ', limit);
+	// Kick the Firebase
+	this.firebase.limit(this.instance, this.url, limit);
 
 	return this;
 };
@@ -527,16 +648,20 @@ FirebaseQuery.prototype.limit = function (limit)
 FirebaseQuery.prototype.startAt = function (priority, name)
 {
 	// Safety Net
-	if (! _.isUndefined(priority) && ! _.isNumber(priority) && ! _.isString(priority)) {throw Error ('Query.startAt: Invalid priority');}
-	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.startAt: Invalid name');}
+	if (_.isUndefined(priority) || (! _.isNull(priority) && ! _.isNumber(priority) && ! _.isString(priority))) {throw Error ('Query.startAt: Invalid priority (integer, string, or null)');}
+	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.startAt: Invalid name (string)');}
 
 	// Only allow 2 Query elements
-	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+	if (_.keys(this.query).length > 2) {throw Error ('Query.startAt: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Prevent Orphaned Query objects on the other side of the Kroll Bridge
+	if (_.keys(this.listeners).length) {throw Error ('Query.startAt: query locked due to active listeners (use off() to remove listeners or create a new query object)');}
 
 	// Register the query element
 	this.query['startAt'] = true;
 
-	console.log('starting at ', priority, name);
+	// Kick the Firebase
+	this.firebase.startAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
 
 	return this;
 };
@@ -548,16 +673,22 @@ FirebaseQuery.prototype.startAt = function (priority, name)
 FirebaseQuery.prototype.endAt = function (priority, name)
 {
 	// Safety Net
-	if (! _.isUndefined(priority) && ! _.isNumber(priority) && ! _.isString(priority)) {throw Error ('Query.endAt: Invalid priority');}
-	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.endAt: Invalid name');}
+	if (_.isUndefined(priority) || (! _.isNull(priority) && ! _.isNumber(priority) && ! _.isString(priority))) {throw Error ('Query.endAt: Invalid priority (integer, string, or null)');}
+	if (! _.isUndefined(name) && ! _.isString(name)) {throw Error ('Query.endAt: Invalid name (string)');}
 
 	// Only allow 2 Query elements
-	if (_.keys(this.query).length > 2) {throw Error ('Query.limit: Can\'t combine startAt(), endAt(), and limit()');}
+	if (_.keys(this.query).length > 2) {throw Error ('Query.endAt: Can\'t combine startAt(), endAt(), and limit()');}
+
+	// Prevent Orphaned Query objects on the other side of the Kroll Bridge
+	if (_.keys(this.listeners).length) {throw Error ('Query.endAt: query locked due to active listeners (use off() to remove listeners or create a new query object)');}
 
 	// Register the query element
 	this.query['endAt'] = true;
 
-	console.log('ending at ', priority, name);
+	// Kick the Firebase
+	this.firebase.endAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
+
+	return this;
 };
 
 /*
@@ -1050,7 +1181,7 @@ exports.setupCollection = function (Collection)
 
 /*
 ===============================================================================>
-	Shared Utility Functions
+	Shared Utility Functions & Objects
 ===============================================================================>
 */
 
