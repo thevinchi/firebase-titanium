@@ -3,10 +3,10 @@
 # during compilation, packaging, distribution, etc.
 #
 version: 0.1.0
-#apiversion: 2
+apiversion: 2
 description: Firebase iOS Titanium Module
 author: Left Lane Lab
-license: Commercial
+license: GPL
 copyright: Copyright (c) 2014 by Left Lane Lab, LLC
 
 
