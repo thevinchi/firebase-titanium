@@ -1,5 +1,5 @@
 /**
- * Your Copyright Here
+ * Copyright 2014 by Left Lane Lab, LLC
  *
  * Appcelerator Titanium is Copyright (c) 2009-2010 by Appcelerator, Inc.
  * and licensed under the Apache Public License (version 2)
