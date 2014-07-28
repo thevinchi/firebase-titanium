@@ -73,7 +73,6 @@
 {
 	// release any resources that have been retained by the module
 	NSLog(@"[INFO] %@ Deallocating", self);
-	[super dealloc];
 }
 
 #pragma mark Internal Memory Management
@@ -315,7 +314,6 @@
 	{
 		// Execute [onComplete] callback
 		NSString *_test = [_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
-		NSLog(@"[INFO] Return from onComplete: %@", _test);
 	})];
 }
 
@@ -341,10 +339,8 @@
 	// Argument Filter
 	if (! _url || ! _updateFunction) {return;}
 
-	NSLog(@"[INFO] Running Transaction on: %@", _url);
-
 	// Kick the Firebase
-	[[[[Firebase alloc] autorelease] initWithUrl:_url] runTransactionBlock:^FTransactionResult *(FMutableData *currentData)
+	[[[Firebase alloc] initWithUrl:_url] runTransactionBlock:^FTransactionResult *(FMutableData *currentData)
 	{
 		// Load the [payload] with the [updateFunction]
 		NSDictionary *_payload = [NSDictionary dictionaryWithDictionary:[_updateFunction call:@[[self FMutableDataSpider:currentData]] thisObject:nil]];
@@ -395,124 +391,149 @@
  *	- args[0] - (NSString) the URL for Firebase Reference
  *	- args[1] - (NSString) Event Type to listen for
  *  - args[2] - (KrollCallback) callback
- *  - args[3] - (id) context for callback
+ *  - args[2] - (KrollCallback) cancelCallback
  *
  */
 -(id)on: (id)args
 {
-	// Initialize the [arguments]
-	NSString *_url = ([args count] && ! [args[0] isKindOfClass:[NSNull class]] ? args[0] : nil);
-	NSString *_type = ([args count] > 1 && ! [args[1] isKindOfClass:[NSNull class]] ? args[1] : nil);
-	KrollCallback *_callback = ([args count] > 2 && ! [args[2] isKindOfClass:[NSNull class]] ? args[2] : nil);
-	id _context = ([args count] > 3 && ! [args[3] isKindOfClass:[NSNull class]] ? args[3] : nil);
+    if (! [args count] > 2) {return;}
 
-	NSLog(@"[INFO] Adding Listener: %@ (%@)", _type, _url);
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	NSString *_type = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	KrollCallback *_callback = ([args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+	KrollCallback *_cancelCallback = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
 
 	// Argument Filter
-	if (! _url || ! _type || ! _callback) {return NO;}
+	if (! _url || ! _type || ! _callback) {return;}
 
-	// Search for [type] in [gEventTypes]
+	// Validate [type] and set [event]
 	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
 	if (_search == NSNotFound) {return;}
+	int *_event = _search;
 
-	// Initialize [event] from [search]
-	int* _event = _search;
+	NSLog(@"[INFO] Adding Listener: %@ (%@)", _type, _url);
 
 	// Initialize [gInstances] for [url] (only done once p/[url])
 	if (! self.gInstances[_url])
 	{
 		[self.gInstances setObject:[[Firebase alloc] initWithUrl:_url] forKey:_url];
-		NSLog(@"[INFO] Set Instance: %@", self.gInstances[_url]);
 		[self.gListeners setObject:[NSMutableDictionary dictionary] forKey:_url];
 	}
 
 	// Set the [handle] while creating a [listener]
-	FirebaseHandle _handle = [self.gInstances[_url] observeEventType:_event withBlock:^(FDataSnapshot *_snapshot)
+	FirebaseHandle _handle = [self.gInstances[_url] observeEventType:_event andPreviousSiblingNameWithBlock:^(FDataSnapshot *_snapshot, NSString *_prevName)
 	{
 		// Execute [callback]
-		[_callback call:@[[NSMutableDictionary dictionaryWithObject:[self FDataSnapshotSpider:_snapshot] forKey:@"snapshot"]] thisObject:_context];
-	}];
+		[_callback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+	}
 
-	// Initialize the [key] for [handle]
-	NSNumber *_key = [NSNumber numberWithInteger:_handle];
+	// Execute [cancelCallback] callback
+	withCancelBlock:(! _cancelCallback ? nil : ^(NSError *error)
+	{
+		[_cancelCallback call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
 
 	// Save the [handle] in [gListeners].[type]
-	[self.gListeners[_url] setObject:_key forKey:_key];
+	[self.gListeners[_url] setObject:[NSNumber numberWithInteger:_handle] forKey:[NSNumber numberWithInteger:_handle]];
 
-	NSLog(@"[INFO] Returning Handle: (%@)", _key);
+	NSLog(@"[INFO] Returning Handle: (%@)", [NSNumber numberWithInteger:_handle]);
 
 	// Return the [key] for future reference
-	return _key;
+	return [NSNumber numberWithInteger:_handle];
 }
 
 /**
- * Remove a Firebase [listener] by [handle]
+ * Remove a [listener] from an [instance] by [handle]
  *
  *	- args[0] - (NSString) the URL for Firebase Reference
- *	- args[1] - (NSString) Event Type to remove
- *	- args[2] - (NSNumber) Key to [gListeners][type] for [handle]
+ *	- args[1] - (NSNumber) Key to [gListeners] for [handle]
  *
  */
 -(void)off: (id)args
 {
-	// Initialize the [arguments]
-	NSString *_url = ([args count] && ! [args[0] isKindOfClass:[NSNull class]] ? args[0] : nil);
-	NSString *_type = ([args count] > 1 && ! [args[1] isKindOfClass:[NSNull class]] ? args[1] : nil);
-	NSNumber *_key = ([args count] > 2 && ! [args[2] isKindOfClass:[NSNull class]] ? args[2] : nil);
+	if (! [args count] > 1) {return;}
 
-	NSLog(@"[INFO] Removing Listener: %@ (%@)", _type, _key);
+	// Initialize the [arguments]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	NSNumber *_handle = ([args[1] isKindOfClass:[NSNumber class]] ? args[1] : nil);
+
+	NSLog(@"[INFO] Removing Listener: %@ (%@)", _handle, _url);
 
 	// Argument Filter
-	if (! _url || ! _type || ! _key) {return;}
+	if (! _url || ! _handle) {return;}
 
-	// Search for [type] in [gEventTypes]
-	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
-	if (_search == NSNotFound) {return;}
-
-	// Initialize [event] from [search]
-	int* _event = _search;
-
-	// Ensure there is a [gInstance] for this [url]
-	if (! self.gInstances[_url]) {
-
-		// Take the opportunity to release [gListeners].[url] if needed
-		if (self.gListeners[_url]) {
-			[self.gListeners removeObjectForKey:_url];
-		}
-
-		return;
-	}
-
-	// Ensure there is a [gListener] for this [url] && [key]
-	if (! self.gListeners[_url])
+	// Validate [gInstance] && [gListeners] for this [url]
+	if (! self.gInstances[_url] || ! self.gListeners[_url])
 	{
-		// Take the opportunity to release [gInstances].[url] if needed
-		[self.gInstances removeObjectForKey:_url];
+		// Release [gInstances] && [gListeners] for this [url] (if set)
+		if (self.gInstances[_url]) {[self.gInstances removeObjectForKey:_url];}
+		if (self.gListeners[_url]) {[self.gListeners removeObjectForKey:_url];}
 
+		// Finished Housekeeping
 		return;
 	}
 
-	// Ensure there is a [gListener] for this [key]
-	if (! self.gListeners[_url][_key]) {return;}
+	// Validate the [handle] was set for this [url]
+	if (! self.gListeners[_url][_handle]) {return;}
 
 	// Remove the [listener] by [handle] from [gInstance]
-	[self.gInstances[_url] removeObserverWithHandle:[self.gListeners[_url][_key] integerValue]];
+	[self.gInstances[_url] removeObserverWithHandle:[_handle integerValue]];
 
-	NSLog(@"[INFO] Listener Removed: %@ (%@)", _type, self.gListeners[_url][_key]);
+	NSLog(@"[INFO] Listener Removed: %@ (%@)", _handle, _url);
 
 	// Remove the [handle] from [gListeners].[type]
-	[self.gListeners[_url] removeObjectForKey:_key];
+	[self.gListeners[_url] removeObjectForKey:_handle];
 
 	// Release [gInstance].[url] if this is the last [gListener]
 	if (! [self.gListeners[_url] count])
 	{
 		NSLog(@"[INFO] Releasing Instance (%@)", _url);
 
-		[self.gListeners removeObjectForKey:_url];
 		[self.gInstances removeObjectForKey:_url];
-
-		NSLog(@"[INFO] Released Instance (%@)", _url);
+		[self.gListeners removeObjectForKey:_url];
 	}
+}
+
+/**
+ * Listen to [Firebase] for one event
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (NSString) Event Type to listen for
+ *  - args[2] - (KrollCallback) successCallback
+ *  - args[2] - (KrollCallback) failureCallback
+ *
+ */
+-(void)once: (id)args
+{
+    if (! [args count] > 2) {return;}
+	
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	NSString *_type = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	KrollCallback *_successCallback = ([args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+	KrollCallback *_failureCallback = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+	
+	// Argument Filter
+	if (! _url || ! _type || ! _successCallback) {return;}
+
+	// Validate [type] and set [event]
+	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
+	if (_search == NSNotFound) {return;}
+	int *_event = _search;
+	
+	// Create a [listener]
+	[[[Firebase alloc] initWithUrl:_url] observeSingleEventOfType:_event andPreviousSiblingNameWithBlock:^(FDataSnapshot *_snapshot, NSString *_prevName)
+	{
+		// Execute [callback]
+		[_successCallback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+	}
+
+	// Execute [cancelCallback] callback
+	withCancelBlock:(! _failureCallback ? nil : ^(NSError *error)
+	{
+		[_failureCallback call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
 }
 
 /**
@@ -537,14 +558,12 @@
 	// Argument Filter
 	if (! _id || ! _type || ! _callback) {return;}
 
-	// Search for [type] in [gEventTypes]
+	// Validate [type] and set [event]
 	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
 	if (_search == NSNotFound) {return;}
+	int *_event = _search;
 
-	// Initialize [event] from [search]
-	int* _event = _search;
-
-	// Verify a [gQuery] already exists for this [id]
+	// Verify a [gQuery] exists for this [id]
 	if (! self.gQuery[_id]) {return;}
 	
 	// Set the [handle] while creating a [listener]
@@ -560,20 +579,8 @@
 		[_cancelCallback call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
 	})];
 
-	// Initialize the [key] for [handle]
-	NSNumber *_key = [NSNumber numberWithInteger:_handle];
-
-	// Initialize the [gQueryListener] for this [gQuery]
-	if (! self.gQueryListeners[_id])
-	{
-		[self.gQueryListeners setObject:[NSMutableDictionary dictionary] forKey:_id];
-	}
-
-	// Save the [handle] in [gQueryListeners]
-	[self.gQueryListeners[_id] setObject:_key forKey:_key];
-
-	// Return the [key] for future reference
-	return _key;
+	// Return the [handle] for future reference
+	return [NSNumber numberWithInteger:_handle];
 }
 
 /**
@@ -581,9 +588,9 @@
  *
  *	- args[0] - (NSNumber) the [gQuery] instance identifier
  *	- args[1] - (NSNumber) Key to [gQueryListeners] for [handle]
-*
+ *
  */
--(id)queryOff: (id)args
+-(void)queryOff: (id)args
 {
     if (! [args count] > 1) {return;}
 
@@ -594,20 +601,55 @@
 	// Argument Filter
 	if (! _id || ! _handle) {return;}
 
-	// Validate [gQuery] && [gQueryListeners]
-	if (! self.gQuery[_id] || ! self.gQueryListeners[_id] || ! self.gQueryListeners[_id][_handle]) {return;}
+	// Validate [gQuery]
+	if (! self.gQuery[_id]) {return;}
 
 	// Remove the listener by [handle] from [gQuery]
-	[self.gQuery[_id] removeObserverWithHandle:[self.gQueryListeners[_id][_handle] integerValue]];
+	[self.gQuery[_id] removeObserverWithHandle:[_handle integerValue]];
+}
 
-	// Remove the [handle] from [gQueryListeners]
-	[self.gQueryListeners[_id] removeObjectForKey:_handle];
+/**
+ * Listen to [gQuery] for one event
+ *
+ *	- args[0] - (NSNumber) the [gQuery] instance identifier
+ *	- args[1] - (NSString) Event Type to listen for
+ *  - args[2] - (KrollCallback) successCallback
+ *  - args[2] - (KrollCallback) failureCallback
+ *
+ */
+-(void)queryOnce: (id)args
+{
+    if (! [args count] > 2) {return;}
 
-	// Release [gQueryListeners].[id] if this is the last [gQueryListener]
-	if (! [self.gQueryListeners[_id] count])
+	// Initialize the [args]
+	NSNumber *_id = ([args[0] isKindOfClass:[NSNumber class]] ? args[0] : nil);
+	NSString *_type = ([args[1] isKindOfClass:[NSString class]] ? args[1] : nil);
+	KrollCallback *_successCallback = ([args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+	KrollCallback *_failureCallback = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _id || ! _type || ! _successCallback) {return;}
+
+	// Validate [type] and set [event]
+	NSUInteger _search = [self.gEventTypes indexOfObject:_type];
+	if (_search == NSNotFound) {return;}
+	int *_event = _search;
+
+	// Verify a [gQuery] exists for this [id]
+	if (! self.gQuery[_id]) {return;}
+
+	// Set the [handle] while creating a [listener]
+	[self.gQuery[_id] observeSingleEventOfType:_event andPreviousSiblingNameWithBlock:^(FDataSnapshot *_snapshot, NSString *_prevName)
 	{
-		[self.gQueryListeners removeObjectForKey:_id];
+		// Execute [callback]
+		[_successCallback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
 	}
+
+	 // Execute [cancelCallback] callback
+	withCancelBlock:(! _failureCallback ? nil : ^(NSError *error)
+	{
+		[_failureCallback call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
 }
 
 /**
@@ -633,7 +675,7 @@
 	// Initialize [gQuery] for [id] (only done once p/[id])
 	if (! self.gQuery[_id])
 	{
-		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryLimitedToNumberOfChildren:[_limit integerValue]] forKey:_id];
+		[self.gQuery setObject:[[[Firebase alloc] initWithUrl:_url] queryLimitedToNumberOfChildren:[_limit integerValue]] forKey:_id];
 	}
 
 	// Update existing [gQuery] reference
@@ -668,7 +710,7 @@
 	// Initialize [gQuery] for [id] (only done once p/[id])
 	if (! self.gQuery[_id])
 	{
-		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryStartingAtPriority:_priority andChildName:_childName] forKey:_id];
+		[self.gQuery setObject:[[[Firebase alloc] initWithUrl:_url] queryStartingAtPriority:_priority andChildName:_childName] forKey:_id];
 	}
 
 	// Update existing [gQuery] reference
@@ -703,7 +745,7 @@
 	// Initialize [gQuery] for [id] (only done once p/[id])
 	if (! self.gQuery[_id])
 	{
-		[self.gQuery setObject:[[[[Firebase alloc] autorelease] initWithUrl:_url] queryEndingAtPriority:_priority andChildName:_childName] forKey:_id];
+		[self.gQuery setObject:[[[Firebase alloc] initWithUrl:_url] queryEndingAtPriority:_priority andChildName:_childName] forKey:_id];
 	}
 	
 	// Update existing [gQuery] reference
@@ -711,6 +753,140 @@
 	{
 		[self.gQuery setObject:[self.gQuery[_id] queryEndingAtPriority:_priority andChildName:_childName] forKey:_id];
 	}
+}
+
+/**
+ * Cancel [onDisconnect] instructions
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *  - args[1] - (KrollCallback) callback
+ *
+ */
+-(void)onDisconnectCancel: (id)args
+{
+    if (! [args count]) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 1 && [args[1] isKindOfClass:[KrollCallback class]] ? args[1] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] cancelDisconnectOperationsWithCompletionBlock:(! _onComplete ? nil : ^(NSError *_error, Firebase *_ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(_error ? [_error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Remove data @ [url] [onDisconnect]
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *  - args[1] - (KrollCallback) callback
+ *
+ */
+-(void)onDisconnectRemove: (id)args
+{
+    if (! [args count]) {return;}
+	
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 1 && [args[1] isKindOfClass:[KrollCallback class]] ? args[1] : nil);
+	
+	// Argument Filter
+	if (! _url) {return;}
+	
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] onDisconnectRemoveValueWithCompletionBlock:(! _onComplete ? nil : ^(NSError *_error, Firebase *_ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(_error ? [_error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Set [value] @ [url] (onDisconnect)
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (id) values to be updated
+ *  - args[2] - (KrollCallback) callback
+ *
+ */
+-(void)onDisconnectSet: (id)args
+{
+    if (! [args count] > 1) {return;}
+	
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 2 && [args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] onDisconnectSetValue:args[1] withCompletionBlock:(! _onComplete ? nil : ^(NSError *_error, Firebase *_ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(_error ? [_error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Set [value] @ [url] w/[priority] (onDisconnect)
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (id) values to be updated
+ *	- args[2] - (NSString | NSNumber) priority to be set
+ *  - args[3] - (KrollCallback) callback
+ *
+ */
+-(void)onDisconnectSetWithPriority: (id)args
+{
+    if (! [args count] > 2) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 3 && [args[3] isKindOfClass:[KrollCallback class]] ? args[3] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] onDisconnectSetValue:args[1] andPriority:args[2] withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, Firebase *ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(error ? [error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
+}
+
+/**
+ * Update [value] @ [url] (onDisconnect)
+ *
+ *	- args[0] - (NSString) the URL for Firebase Reference
+ *	- args[1] - (id) values to be updated
+ *  - args[2] - (KrollCallback) callback
+ *
+ */
+-(void)onDisconnectUpdate: (id)args
+{
+    if (! [args count] > 1) {return;}
+
+	// Initialize the [args]
+	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
+	KrollCallback *_onComplete = ([args count] > 2 && [args[2] isKindOfClass:[KrollCallback class]] ? args[2] : nil);
+
+	// Argument Filter
+	if (! _url) {return;}
+
+	// Kick the Firebase
+	[[[Firebase alloc] initWithUrl:_url] onDisconnectUpdateChildValues:args[1] withCompletionBlock:(! _onComplete ? nil : ^(NSError *_error, Firebase *_ref)
+	{
+		// Execute [onComplete] callback
+		[_onComplete call:@[(_error ? [_error localizedDescription] : [NSNull alloc])] thisObject:nil];
+	})];
 }
 
 #pragma mark Internal Utility Functions

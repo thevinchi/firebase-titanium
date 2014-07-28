@@ -2,27 +2,16 @@
  * @author vstross
  */
 
-/*
- * Chain.js (chainify)
+/**
+ * Public API Endpoint for getting a [Firebase] reference or module proxy
  *
- * Source: http://mstumpp.github.io/chain.js/
  ******************************************************************************/
-//eval(function(p,a,c,k,e,r){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a)>35?String.fromCharCode(c+29):c.toString(36))};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('5 E(m){8 n=5(){};n.6.H=5(){7 2.q()};n.6.O=5(e,g){4(!e)R x L(\'I a 5 K F Q.\');8 h;4(!2.G(\'3\')){h={C:2,p:u,X:D,9:[]}}A{h=2.3}8 f=5(){};f.6=h.C.w.6;f.6.w=f;8 i=5(a,b,c,d){2.z=a;2.y=b;2.t=c;2.3=d};i.6=x f();i.6.w=i;8 j=u;8 k=u;4(g){j=g;4(g.r>0){4(J g[g.r-1]===\'5\'){k=g[g.r-1]}}}8 l=x i(e,j,k,h);l.3.9.M(l);l.3.p=N(5(){l.q()},1);7 l};n.6.q=5(){8 b=2;4(!2.3)7 2;4(2.3.p)v(2.3.p);4(2.3.9.r>0){8 c=2.3.9.P();8 d=2;d.B=5(){4(c.t){8 a=2;a.B=5(){b.q.s(b)};c.t.s(a)}A{b.q.s(b)}};c.z.s(d,c.y)}7 2};n.6.S=5(){4(!2.3)7 2;4(2.3.p)v(2.3.p);4(2.3.9)2.3.9.r=0;7 2};n.6.T=5(){4(!2.3)7 2;4(2.3.p)v(2.3.p);7 2};n.6.U=5(){4(!2.3)7[];4(2.3.9)7 2.3.9;7[]};n.6.V=5(){4(!2.3)7[];4(2.3.9)7 2.3.9;7[]};W(8 o Y n.6)m.6[o]=n.6[o];7 m}',61,61,'||this|manager|if|function|prototype|return|var|queue||||||||||||||||timerId|c_process|length|apply|cb|null|clearTimeout|constructor|new|args|func|else|c_next|base|false|chainify|be|hasOwnProperty|exec|Provide|typeof|to|Error|push|setTimeout|c_chain|shift|chained|throw|c_clear|c_delay|c_getSuccessors|c_getPredecessors|for|executing|in'.split('|'),0,{}))
+exports.new = function (url) {return new Firebase(url, this);};
 
-/*
- * Public API Endpoint for getting a [Firebase] reference
- *
- */
-exports.new = function (url)
-{
-	// Return the new [firebase]
-	return new Firebase(url, this);
-};
-
-/*
+/**
  * Public API Endpoint for getting a [firebase] token
  *
- */
+ ******************************************************************************/
 exports.token = function (payload, options, secret)
 {
 	// Safety Net
@@ -34,8 +23,14 @@ exports.token = function (payload, options, secret)
 };
 
 /*
+===============================================================================>
+	Firebase
+===============================================================================>
+*/
+/*
  * Local Firebase API interface object
- */
+ *
+ ******************************************************************************/
 function Firebase (url, module)
 {
 	// Global Variables
@@ -51,24 +46,15 @@ function Firebase (url, module)
 	// Set the [url] (allows for absolute &| empty [forge]), then strip trailing "/" for the sloppy types...
 	this.url = (! _.isUndefined(url) && url.indexOf('https://') === 0 ? url : (this.forge || '') + (url || '')).replace(/^https\:\/\/([\S]+[^\/])[\/]?/i, "https://$1");
 
-	// Register the new [instance] of [url]
-	this.instance = this.instances.next++;
-
 	// Return the new [Firebase] pseudo-reference
 	return this;
 }
 
 /*
- * Firebase instance management object
- *
- ******************************************************************************/
-Firebase.prototype.instances = {'next' : 0};
-
-/*
  * Authenticates a Firebase client
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.auth = function (authToken, onComplete, onCancel)
 {
 	// Safety Net
@@ -87,7 +73,7 @@ Firebase.prototype.auth = function (authToken, onComplete, onCancel)
  * De-Authenticates a Firebase client
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.unauth = function (onComplete)
 {
 	// Kick the [firebase]
@@ -100,7 +86,7 @@ Firebase.prototype.unauth = function (onComplete)
  * Returns a new Firebase reference
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.child = function (path)
 {
 	// Safety Net
@@ -114,7 +100,7 @@ Firebase.prototype.child = function (path)
  * Returns a new Firebase reference
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.parent = function ()
 {
 	// Simple Safety Net (already at the top)
@@ -128,7 +114,7 @@ Firebase.prototype.parent = function ()
  * Returns a new Firebase reference
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.root = function ()
 {
 	// Pop the [children] off and the new reference is the [root]
@@ -139,7 +125,7 @@ Firebase.prototype.root = function ()
  * Returns a the last token of this location as a string
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.name = function ()
 {
 	// Simple Safety Net (already at the top)
@@ -153,7 +139,7 @@ Firebase.prototype.name = function ()
  * Returns the current full [url] property as a string
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.toString = function ()
 {
 	// You can't handle the truth!
@@ -164,7 +150,7 @@ Firebase.prototype.toString = function ()
  * Set/overwrite [value] in Firebase
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)
- */
+ ******************************************************************************/
 Firebase.prototype.set = function (value, onComplete)
 {
 	// Safety Net
@@ -183,7 +169,7 @@ Firebase.prototype.set = function (value, onComplete)
  * Update [value] in Firebase
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.update = function (value, onComplete)
 {
 	// Safety Net
@@ -202,7 +188,7 @@ Firebase.prototype.update = function (value, onComplete)
  * Remove all data from the current [firebase]
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.remove = function (onComplete)
 {
 	// Remove all data from [firebase]
@@ -218,7 +204,7 @@ Firebase.prototype.remove = function (onComplete)
  * Generate new child w/unique [id] and return a new [firebase]
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.push = function (value, onComplete)
 {
 	return (_.isUndefined(value) ?
@@ -237,7 +223,7 @@ Firebase.prototype.push = function (value, onComplete)
  * Set/overwrite [value] && [priority] in Firebase
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.setWithPriority = function (value, priority, onComplete)
 {
 	// Safety Net
@@ -256,7 +242,7 @@ Firebase.prototype.setWithPriority = function (value, priority, onComplete)
  * Set [priority] for the data at this Firebase location
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.setPriority = function (priority, onComplete)
 {
 	// Safety Net
@@ -275,7 +261,7 @@ Firebase.prototype.setPriority = function (priority, onComplete)
  * Atomically modify the data at this Firebase location
  *
  * 	- Matches Firebase Library (VS: 2014-07-24)
- */
+ ******************************************************************************/
 Firebase.prototype.transaction = function (updateFunction, onComplete, applyLocally)
 {
 	// Safety Net
@@ -325,7 +311,7 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
  * Manually disconnect the Firebase client(s)
  *
  * 	- Matches Firebase Library (VS: 2014-07-25)
- */
+ ******************************************************************************/
 Firebase.prototype.goOffline = function ()
 {
 	// Kick the Firebase
@@ -336,7 +322,7 @@ Firebase.prototype.goOffline = function ()
  * Manually reconnect the Firebase client(s)
  *
  * 	- Matches Firebase Library (VS: 2014-07-25)
- */
+ ******************************************************************************/
 Firebase.prototype.goOnline = function ()
 {
 	// Kick the Firebase
@@ -344,69 +330,67 @@ Firebase.prototype.goOnline = function ()
 };
 
 /*
- * Add a listener of [type] and listen for one event
- */
-Firebase.prototype.once = function (type, callback, callbackContext)
-{
-	// Safety Net
-	if (! _.isString(type) || ! _.isFunction(callback)) {return false;}
-
-	// Save [this] reference for local [callback]
-	var _this = this;
-
-	// Inform the [firebase] we are listening
-	var _handle = null;
-
-	// Set the local [callback]
-	_handle = this.on(type, function (snapshot)
-	{
-		// Remove [listener]
-		_this.off(type, _handle);
-
-		// Execute remote [callback]
-		callback(snapshot);
-
-		// Garbage Collection
-		_this = null, _handle = null;
-	}, (_.isObject(callbackContext) ? callbackContext : null));
-
-	return;
-};
-
-/*
- * Create a [listener] of [type]
+ * Create a listener for data changes at this location.
  *
- */
-Firebase.prototype.on = function (type, callback, callbackContext)
+ ******************************************************************************/
+Firebase.prototype.on = function (eventType, callback, cancelCallback, context)
 {
 	// Safety Net
-	if (! _.isString(type)) {return false;}
-	if (! _.isFunction(callback)) {return false;}
+	if (! _.isString(eventType)) {throw Error('Firebase.on: Invalid Arguments');}
+	if (! _.isFunction(callback)) {throw Error('Firebase.on: Invalid Arguments');}
 
 	// Initialize [listeners] collector for this [type]
-	if (_.isUndefined(this.listeners[type])) {this.listeners[type] = [];}
+	if (_.isUndefined(this.listeners[eventType])) {this.listeners[eventType] = [];}
 
-	// Set the [handle]
-	var _handle = this.firebase.on(this.url, type, callback, (_.isObject(callbackContext) ? callbackContext : null));
+	// Set the [listener], and save the [handle]
+	this.listeners[eventType].push({
+		'callback' : callback,
+		'handle' : this.firebase.on(this.url, eventType,
 
-	// Record [callback] for off(*) requests
-	this.listeners[type].push(_handle);
+			// Kroll Bridge Wrapper for [callback]
+			_.bind(function (data, prevChildName)
+			{
+				// Bind to [context] (if supplied)
+				if (_.isObject(context))
+				{_.bind(callback, context)(new FirebaseSnapshot(data, this.url), prevChildName);}
 
-	// Return the [handle] for future reference
-	return _handle;
+				// The context is not important
+				else
+				{callback(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+			}, this),
+
+			// Kroll Bridge Wrapper for [cancelCallback] (if supplied)
+			(! _.isFunction(cancelCallback) ? null : _.bind(function (error)
+			{
+				// Bind to [context] (if supplied)
+				if (_.isObject(context))
+				{_.bind(cancelCallback, context)(error);}
+
+				// The context is not important
+				else
+				{cancelCallback(error);}
+
+			}, this))
+		)
+	});
+
+	// Return the [callback] for future de-referencing purposes
+	return callback;
 };
 
 /*
- * Remove one or more [listeners]
- */
-Firebase.prototype.off = function (type, handle)
+ * Remove listeners for data changes at this location.
+ *
+ ******************************************************************************/
+Firebase.prototype.off = function (eventType, callback, context)
 {
 	// Unregister ALL [listeners] OR all [listeners] for a [type]
-	if (_.isUndefined(type) || _.isUndefined(handle))
+	if (_.isUndefined(eventType) || _.isUndefined(callback))
 	{
 		// Safety Net
 		if (_.isEmpty(this.listeners)) {return;}
-		if (! _.isUndefined(type) && (! _.isString(type) || _.isUndefined(this.listeners[type]))) {return;}
+		if (! _.isUndefined(eventType) && (! _.isString(eventType) || _.isUndefined(this.listeners[eventType]))) {return;}
 
 		// Remove ALL [listeners]
 		_.each(_.keys(this.listeners), function (kType)
@@ -415,36 +399,87 @@ Firebase.prototype.off = function (type, handle)
 			if (_.isEmpty(this.listeners[kType])) {return;}
 
 			// Check for [type] filter
-			if (! _.isUndefined(type) && type != kType) {return;}
+			if (! _.isUndefined(eventType) && eventType != kType) {return;}
 
 			// Remove the [listener] from [Firebase]
-			_.each(this.listeners[kType], function (vHandle)
+			_.each(this.listeners[kType], function (vListener)
 			{
-				this.firebase.off(this.url, kType, vHandle);
+				this.firebase.off(this.url, vListener.handle);
 			}, this);
 		}, this);
 
 		// Clean the [listeners]
-		if (! _.isUndefined(type)) {_.omit(this.listeners, type);}
+		if (! _.isUndefined(eventType)) {_.omit(this.listeners, eventType);}
 		else {this.listeners = {};}
 
 		return;
 	}
 
 	// Safety Net
-	if (! _.isString(type) || ! _.isNumber(handle)) {return false;}
+	if (! _.isString(eventType) || ! _.isFunction(callback) || _.isUndefined(this.listeners[eventType])) {return false;}
 
-	// Ensure the [callback] is registered with [listeners]
-	if (_.indexOf(this.listeners[type], handle) < 0) {return false;}
+	// Remove the first occurrence of [callback] from [listeners]
+	_.every(this.listeners[eventType], function (vListener, key)
+	{
+		if (vListener.callback === callback)
+		{
+			// Remove [listener] from [firebase] by [handle]
+			this.firebase.off(this.url, vListener.handle);
 
-	// Remove the [listener] for [type]
-	this.firebase.off(this.url, type, handle);
+			// Remove from [listeners] array
+			this.listeners[eventType].splice(key, 1);
 
-	// Remove [callback] from [listeners]
-	this.listeners[type] = _.without(this.listeners[type], handle);
+			// Finished
+			return false;
+		}
+
+		// Keep searching
+		return true;
+	}, this);
 
 	// Remove [type] from [listeners] if EMPTY
-	if (! this.listeners[type].length) {_.omit(this.listeners, type);}
+	if (! this.listeners[eventType].length) {_.omit(this.listeners, eventType);}
+};
+
+/*
+ * Listen for exactly one event of the specified event type
+ *
+ ******************************************************************************/
+Firebase.prototype.once = function (eventType, successCallback, failureCallback, context)
+{
+	// Safety Net
+	if (! _.isString(eventType)) {throw Error('Firebase.once: Invalid Arguments');}
+	if (! _.isFunction(successCallback)) {throw Error('Firebase.once: Invalid Arguments');}
+	if (! _.isUndefined(failureCallback) && ! _.isFunction(failureCallback)) {throw Error('Firebase.once: Invalid Arguments');}
+	if (! _.isUndefined(context) && ! _.isObject(context)) {throw Error('Firebase.once: Invalid Arguments');}
+
+	// Kick the [Firebase]
+	this.firebase.once(this.url, eventType,
+
+		// Kroll Bridge Wrapper for [successCallback]
+		_.bind(function (data, prevChildName)
+		{
+			// Bind to [context] (if supplied)
+			if (_.isObject(context))
+			{_.bind(successCallback, context)(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+			// The context is not important
+			else
+			{successCallback(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+		}, this),
+
+		// Kroll Bridge Wrapper for [failureCallback] (if supplied)
+		(! _.isFunction(failureCallback) ? null : _.bind(function (error)
+		{
+			// Bind to [context] (if supplied)
+			if (_.isObject(context)) {_.bind(failureCallback, context)(error);}
+
+			// The context is not important
+			else {failureCallback(error);}
+
+		}, this))
+	);
 };
 
 /*
@@ -475,6 +510,20 @@ Firebase.prototype.endAt = function (priority, name)
 };
 
 /*
+ * Return a new FirebaseOnDisconnect Object for this [url]
+ *
+ ******************************************************************************/
+Firebase.prototype.onDisconnect = function ()
+{
+	return new FirebaseOnDisconnect(this.url, this.firebase);
+};
+
+/*
+===============================================================================>
+	FirebaseQuery
+===============================================================================>
+*/
+/*
  * Local FirebaseQuery API interface object
  *
  * 	- expects to be created from an existing [Firebase] instance
@@ -501,7 +550,7 @@ function FirebaseQuery (url, module)
  * FirebaseQuery instance manager
  *
  ******************************************************************************/
-FirebaseQuery.prototype.instances = {'next' : 1};
+FirebaseQuery.prototype.instances = {'next' : 0};
 
 /*
  * Create a listener for data changes at this location.
@@ -559,7 +608,6 @@ FirebaseQuery.prototype.on = function (eventType, callback, cancelCallback, cont
 /*
  * Remove listeners for data changes at this location.
  *
- * YOU ARE HERE!!!!!!!!!!!!!!!!!!!!!
  ******************************************************************************/
 FirebaseQuery.prototype.off = function (eventType, callback, context)
 {
@@ -594,27 +642,73 @@ FirebaseQuery.prototype.off = function (eventType, callback, context)
 	}
 
 	// Safety Net
-	if (! _.isString(eventType) || ! _.isFunction(callback) || ! this.listeners[eventType]) {return false;}
+	if (! _.isString(eventType) || ! _.isFunction(callback) || _.isUndefined(this.listeners[eventType])) {return false;}
 
-	// Ensure the [callback] is registered with [listeners]
-	if (! _.findWhere(this.listeners[eventType], {'callback' : callback}).length) {return false;}
-
-	// Remove the [listener] for [type]
-	this.firebase.queryOff(this.instance, _.findWhere(this.listeners[eventType], {'callback' : callback}).handle);
-
-	// Remove [callback] from [listeners] (only the first occurrence)
-	var done = false;
-	_.each(this.listeners[eventType], function (vListener, key)
+	// Remove the first occurrence of [callback] from [listeners]
+	_.every(this.listeners[eventType], function (vListener, key)
 	{
-		if (! done && vListener.callback == callback)
+		if (vListener.callback === callback)
 		{
-			done = true;
+			// Remove [listener] from [firebase] by [handle]
+			this.firebase.queryOff(this.instance, vListener.handle);
+
+			// Remove from [listeners] array
 			this.listeners[eventType].splice(key, 1);
+
+			// Finished
+			return false;
 		}
-	});
+
+		// Keep searching
+		return true;
+	}, this);
 
 	// Remove [type] from [listeners] if EMPTY
 	if (! this.listeners[eventType].length) {_.omit(this.listeners, eventType);}
+};
+
+/*
+ * Listen for exactly one event of the specified event type
+ *
+ ******************************************************************************/
+FirebaseQuery.prototype.once = function (eventType, successCallback, failureCallback, context)
+{
+	// Safety Net
+	if (! _.isString(eventType)) {throw Error('Query.once: Invalid Arguments');}
+	if (! _.isFunction(successCallback)) {throw Error('Query.once: Invalid Arguments');}
+	if (! _.isUndefined(failureCallback) && ! _.isFunction(failureCallback)) {throw Error('Query.once: Invalid Arguments');}
+	if (! _.isUndefined(context) && ! _.isObject(context)) {throw Error('Query.once: Invalid Arguments');}
+
+	// Require at least 1 Query element is already set
+	if (_.keys(this.query).length < 1) {throw Error ('Query.once: Must set startAt(), endAt(), or limit() first');}
+
+	// Kick the [Firebase]
+	this.firebase.queryOnce(this.instance, eventType,
+
+		// Kroll Bridge Wrapper for [successCallback]
+		_.bind(function (data, prevChildName)
+		{
+			// Bind to [context] (if supplied)
+			if (_.isObject(context))
+			{_.bind(successCallback, context)(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+			// The context is not important
+			else
+			{successCallback(new FirebaseSnapshot(data, this.url), prevChildName);}
+
+		}, this),
+
+		// Kroll Bridge Wrapper for [failureCallback] (if supplied)
+		(! _.isFunction(failureCallback) ? null : _.bind(function (error)
+		{
+			// Bind to [context] (if supplied)
+			if (_.isObject(context)) {_.bind(failureCallback, context)(error);}
+
+			// The context is not important
+			else {failureCallback(error);}
+
+		}, this))
+	);
 };
 
 /*
@@ -692,491 +786,101 @@ FirebaseQuery.prototype.endAt = function (priority, name)
 };
 
 /*
-===============================================================================>
-	Backbone Sync Adapter
-===============================================================================>
-*/
-/*
- * Public API Endpoint for Backbone Sync Adapter
+ * Get a Firebase reference to the Query's location.
  *
  ******************************************************************************/
-exports.sync = function (method, model, options)
+FirebaseQuery.prototype.ref = function () {return exports.new(this.url);};
+
+/*
+===============================================================================>
+	Firebase onDisconnect
+===============================================================================>
+*/
+/*
+ * Local Firebase onDisconnect API controller
+ *
+ * 	- expects to be created from an existing [Firebase] instance
+ ******************************************************************************/
+function FirebaseOnDisconnect (url, module)
 {
 	// Safety Net
-	if (! _.isString(method) || ! _.isObject(model)) {return;}
+	if (! _.isString(url)) {return false;}
 
-	// Verify this is a Firebase Model
-	if (! _.isObject(this.Firebase)
-		|| ! _.isObject(model.config.firebase)
-		|| ! _.isString(model.config.firebase.path)) {return;}
-
-	// Respect the [options]
-	if (_.isObject(options))
-	{
-		var _successCallback = (_.isFunction(options.success) ? options.success : false);
-		var _errorCallback = (_.isFunction(options.error) ? options.error : false);
-	}
-
-	// Initialize the [payload] container
-	var _payload;
-
-	// Manage the [method]
-	switch (method)
-	{
-		/*
-		 * Get data from [firebase]
-		 * - Initiated from Model.fetch() and Collection.fetch()
-		 */
-		case 'read':
-
-			// Single Model
-			if (! _.isArray(model.toJSON()))
-			{
-				// Safety Net
-				if (! _.isString(model.get(model.idAttribute))) {return;}
-
-				var _callback = function (event)
-				{
-					// ERROR Condition
-					// TODO: Needs defined!!
-					if (1 == 2)
-					{
-						// Execute ERROR [callback]
-						(_errorCallback ? _errorCallback(event.snapshot, JSON.stringify(event.snapshot), options) : 0);
-						return;
-					}
-
-					// Execute SUCCESS [callback]
-					(_successCallback ?	_successCallback(event.snapshot, JSON.stringify(event.snapshot), options) :	0);
-				};
-
-				// Initialize the [firebase] and listen for ONE return
-				if (! _.isString(model.config.firebase.live) || model.config.firebase.live == 'collection')
-				{
-					this.Firebase.new(model.config.firebase.path + '/' + model.get(model.idAttribute)).once('value', _callback);
-				}
-
-				// Initialize the [firebase] and leave the door open
-				else
-				{
-					// Ensure the [listener] is not already set
-					if (model.config.firebase.listeners.model === false)
-					{
-						model.config.firebase.listeners.model = this.Firebase.new(model.config.firebase.path + '/' + model.get(model.idAttribute));
-						model.config.firebase.listeners.model.on('value', _callback);
-					}
-				}
-			}
-
-			// Collection
-			else
-			{
-				// Create the local [callback]
-				var _callback = function (event)
-				{
-					// ERROR Condition
-					// TODO: Needs defined!
-					if (1 == 2)
-					{
-						// Execute ERROR [callback]
-						(_errorCallback ? _errorCallback([],JSON.stringify([]),options) : 0);
-						return;
-					}
-
-					// Initialize the [dictionary] of SNAPSHOTS
-					var dictionary = [];
-
-					// SUCCESS Condition
-					if (event.snapshot.childrenCount)
-					{
-						// Populate the [dictionary]
-						_.each(_.keys(event.snapshot.value), function (child)
-						{
-							// Add each [child] SNAPSHOT to the [dictionary]
-							dictionary.push(event.snapshot.value[child]);
-						});
-					}
-
-					// Execute SUCCESS [callback]
-					(_successCallback ?	_successCallback(dictionary, JSON.stringify(dictionary), options) : 0);
-
-					// Garbage Collection
-					dictionary = null;
-				};
-
-				// Initialize the [firebase] and listen for return
-				if (! _.isString(model.config.firebase.live) || model.config.firebase.live == 'model')
-				{
-					this.Firebase.new(model.config.firebase.path).once('value', _callback);
-				}
-
-				// Initialize the [firebase] and leave the door open
-				else
-				{
-					// Ensure the [listener] is not already set
-					if (model.config.firebase.listeners.collection === false)
-					{
-						model.config.firebase.listeners.collection = this.Firebase.new(model.config.firebase.path);
-						model.config.firebase.listeners.collection.on('value', _callback);
-					}
-				}
-			}
-			break;
+	return {
 
 		/*
-		 * Add new data to [firebase]
-		 * - Initiated from Model.save() and Collection.create() when empty(model.idAttribute)
-		 */
-		case 'create':
-console.log('Creating... untested.');
-return;
-			// Filter: Set the [payload] omitting the [model.config.blacklist]
-			if (_.isArray(model.config.firebase.blacklist))
-			{_payload = _.omit(model.toJSON(), model.config.firebase.blacklist);}
-
-			// Simple: Set the [payload] from the [model]
-			else
-			{_payload = model.toJSON();}
-
-			// Allow [firebase] to generate a unique [model.idAttribute] value
-			new FirebaseAPI(model.config.firebase.path, model.config.module)
-			.push(_payload, function (event)
-			{
-				// Extract the new [id] from [firebase] response
-				var id = _.keys(event.snapshot)[0];
-
-				// Add the new [id] to the [snapshot]
-				event.snapshot[id][model.idAttribute] = id;
-
-				// Execute the [callback]
-				(_successCallback ?	_successCallback(
-					event.snapshot[id],
-					JSON.stringify(event.snapshot[id]),
-					options
-				) :	0);
-
-				// Garbage Collection
-				id = null;
-			});
-			break;
-
-		/*
-		 * Update existing [payload] in [firebase]
-		 * - Initiated from Model.save() and Collection.create() when !empty(model.idAttribute)
-		 */
-		case 'update':
-
-			// The [model.idAttribute] is required
-			if (! _.isString(model.get(model.idAttribute))) {break;}
-
-			// Filter: Set the [payload] from [model.changed] omitting the [model.config.blacklist]
-			if (_.isArray(model.config.firebase.blacklist))
-			{_payload = _.omit(model.changed, model.config.firebase.blacklist);}
-
-			// Simple: Set the [payload] from the [model.changed]
-			else
-			{_payload = model.changed;}
-
-			// No sense in updating unless something is changed
-			if (_.isEmpty(_payload)) {break;}
-
-			// Send the [payload] and listen for ONE return (! LIVE or ! LISTENING)
-			if (! _.isString(model.config.firebase.live) || (! model.config.firebase.listeners.collection && ! model.config.firebase.listeners.model))
-			{
-				this.Firebase.new(model.config.firebase.path + '/' + model.get(model.idAttribute))
-				.update(_payload, null, null, function (event)
-				{
-					// ERROR Condition
-					// TODO: Needs defined!!
-					if (1 == 2)
-					{
-						// Execute ERROR [callback]
-						(_errorCallback ? _errorCallback(event.snapshot, JSON.stringify(event.snapshot), options) : 0);
-						return;
-					}
-
-					// Execute the [callback]
-					(_successCallback ?	_successCallback(event.snapshot, JSON.stringify(event.snapshot), options) : 0);
-				});
-			}
-
-			// Only send the [payload] because Model is LIVE and listening for updates on another channel
-			else
-			{
-				this.Firebase.new(model.config.firebase.path + '/' + model.get(model.idAttribute)).update(_payload);
-			}
-
-			break;
-
-		/*
-		 * Remove [payload] from [firebase]
-		 * - Initiated from Model.destroy()
-		 */
-		case 'delete':
-console.log('Backbone: deleting (NOT CONFIGURED)');
-
-/*
-			// The [payload].[model.idAttribute] is required
-			if (_.isString(_payload[model.idAttribute]))
-			{
-				// Initialize the [child]
-				var _child = _firebase.child(_payload[model.idAttribute]);
-
-				// Remove the [child] from [firebase]
-				_child.remove(_cb);
-			}
-*/
-			break;
-
-	}
-
-	return true;
-};
-
-/*
- * Public API Endpoint for Backbone Sync Adapter
- *
- * 	Extend the MODEL
- */
-exports.setupModel = function (Model, type)
-{
-	_.extend(Model.prototype,
-	{
-		'firebase' : {
-			'priority' : {}
-		},
-
-		'initialize' : function ()
+		 * Cancel all previously queued events for this location and children
+		 *
+		 **********************************************************************/
+		'cancel' : function (onComplete)
 		{
-			// Initialize [listeners] for LIVE Models
-			if (_.isString(this.config.firebase.live) && this.config.firebase.live != 'collection')
+			// Kick the Firebase
+			module.onDisconnectCancel(url, (! _.isFunction(onComplete) ? null : function (error)
 			{
-				this.config.firebase.listeners = {
-					'model' : false
-				};
-			}
+				onComplete(error);
+			}));
 		},
 
-		'parse' : function (snapshot)
+		/*
+		 * Ensure the data at this location is deleted onDisconnect
+		 **********************************************************************/
+		'remove' : function (onComplete)
 		{
-			// Parse the [snapshot]
-			if (snapshot.childrenCount)
-			{var dictionary = FirebaseSnapshot(snapshot);}
-
-			// Initialize empty [dictionary]
-			else {var dictionary = {data : {}, priority : {}};}
-
-			// Inject [id] into the [data]
-			dictionary.data[this.idAttribute] = snapshot.name;
-
-			// Inject the ROOT [priority]
-			dictionary.priority['this'] = snapshot.priority;
-
-			// Store the [priority]
-			this.firebase.priority[snapshot.name] = dictionary.priority;
-
-			// Return the [data]
-			return dictionary.data;
+			// Kick the Firebase
+			module.onDisconnectRemove(url, (! _.isFunction(onComplete) ? null : function (error)
+			{
+				onComplete(error);
+			}));
 		},
 
-		'$priority' : function (key, value)
+		/*
+		 * Ensure the data at this location is set onDisconnect
+		 *
+		 **********************************************************************/
+		'set' : function (value, onComplete)
 		{
 			// Safety Net
-			if (_.isEmpty(this.firebase.priority)) {return null;}
+			if (_.isUndefined(value)) {return;}
 
-			// Simple Top-Level Request
-			if (! _.isString(key)) {return this.firebase.priority[this.get(this.idAttribute)]['this'];}
-
-			// Getting [priority]
-			if (! _.isNumber(value))
+			// Kick the Firebase
+			module.onDisconnectSet(url, value, (! _.isFunction(onComplete) ? null : function (error)
 			{
-				// Set the initial [priority]
-				var _priority = this.firebase.priority[this.get(this.idAttribute)];
-
-				// Walk through the [key]
-				_.each(key.split('.'), function (x)
-				{_priority = (! _.isUndefined(_priority[x]) ? _priority[x] : _priority);});
-
-				// Send the [priority] back
-				return (! _.isObject(_priority) ? _priority : null);
-			}
-
-			// Setting [priority]
-			else
-			{
-
-			}
+				onComplete(error);
+			}));
 		},
 
-		'$getByPriority' : function (key)
+		/*
+		 * Ensure the data at this location is set w/[priority] onDisconnect
+		 *
+		 **********************************************************************/
+		'setWithPriority' : function (value, priority, onComplete)
 		{
 			// Safety Net
-			if (! _.isString(key)) {return false;}
-			if (! _.isObject(this.firebase) || ! _.isObject(this.firebase.priority)) {return false;}
+			if (_.isUndefined(value) || _.isUndefined(priority) || (! _.isNumber(priority) && ! _.isString(priority) && ! _.isNull(priority))) {return;}
 
-			// Set the initial [value]
-			var _value = this.toJSON();
-			if (_.isEmpty(_value)) {return null;}
-
-			// Walk through the [key]
-			_.each(key.split('.'), function (x)
-			{_value = (! _.isUndefined(_value[x]) ? _value[x] : _value);});
-
-			// Simple
-			if (! _.isObject(_value)) {return _value;}
-
-			// Initialize the [index]
-			var _this = this;
-			var _index = _.sortBy(_.keys(_value), function (_key)
+			// Kick the Firebase
+			module.onDisconnectSetWithPriority(url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
 			{
-				return _this.$priority(key + '.' + _key);
-			});
-			_this = null;
-
-			// Rebuild the [value] using [index]
-			var _rebuild = [];
-			_.each(_index, function (_key)
-			{
-				// Define the [key]:[value] Object
-				var _x = {};
-				_x[_key] = _value[_key];
-
-				// Add to the [rebuild]
-				_rebuild.push(_x);
-			});
-
-			// Return [value]
-			return _rebuild;
+				onComplete(error);
+			}));
 		},
 
-		'$get' : function (id)
-		{
-			// Initialize the Q
-			var _deferred = Q.defer();
-
-			try
-			{
-				// Safety Net
-				if (! _.isString(id)) {throw new Error('No ID Provided');}
-
-				// Create a blank slate
-				if (_.keys(this.attributes).length) {this.$clear();}
-
-				// Set the [id]
-				this.set(this.idAttribute, id);
-
-				// Go Get the [Model]
-				this.fetch({
-					success: function (model)
-					{
-						_deferred.resolve(model);
-					},
-					error: function ()
-					{
-						_deferred.reject(new Error('Unable to Fetch Model'));
-					}
-				});
-			}
-			catch (ex)
-			{
-				_deferred.reject(new Error('$get: ' + (ex.message || 'Unspecified Exception')));
-				return;
-			}
-			finally {return _deferred.promise;}
-		},
-
-		'$clear' : function ()
+		/*
+		 * Write the enumerated children at this location onDisconnect
+		 *
+		 **********************************************************************/
+		'update' : function (value, onComplete)
 		{
 			// Safety Net
-			if (_.isString(this.config.firebase.live)
-				&& this.config.firebase.live != 'collection'
-				&& _.isObject(this.config.firebase.listeners.model))
+			if (_.isUndefined(value)) {return;}
+
+			// Kick the Firebase
+			module.onDisconnectUpdate(url, value, (! _.isFunction(onComplete) ? null : function (error)
 			{
-				// Kill the [listener]
-				this.config.firebase.listeners.model.off();
-
-				// Clear the slate
-				this.config.firebase.listeners.model = false;
-			}
-
-			// Clear the [Model]
-			this.clear();
+				onComplete(error);
+			}));
 		}
-	});
-
-	return Model;
-};
-
-/*
- * Public API Endpoint for Backbone Sync Adapter
- *
- * 	Extend the COLLECTION
- */
-exports.setupCollection = function (Collection)
-{
-	_.extend(Collection.prototype,
-	{
-		'comparator' : function (Model)
-		{return Model.$priority();},
-
-		'initialize' : function ()
-		{
-			// Initialize [listeners] for LIVE Collections
-			if (_.isString(this.config.firebase.live) && this.config.firebase.live != 'model')
-			{
-				this.config.firebase.listeners = {
-					'collection' : false
-				};
-
-				// Open the Pipe
-				this.fetch();
-			}
-		},
-
-		'$clear' : function ()
-		{
-			// Safety Net
-			if (! _.isString(this.config.firebase.live) || this.config.firebase.live == 'model')
-			{return false;}
-
-			// Close the Pipe
-			this.$stop();
-
-			// Clear the Collection
-			this.reset();
-		},
-
-		'$stop' : function ()
-		{
-			// Safety Net
-			if (! _.isString(this.config.firebase.live) || this.config.firebase.live == 'model')
-			{return false;}
-
-			// Verify a [listener] is set
-			if (! this.config.firebase.listeners.collection) {return false;}
-
-			// Kill the [listener](s)
-			this.config.firebase.listeners.collection.off();
-
-			// Clear the slate
-			this.config.firebase.listeners.collection = false;
-		},
-
-		'$play' : function ()
-		{
-			// Safety Net
-			if (! _.isString(this.config.firebase.live) || this.config.firebase.live == 'model')
-			{return false;}
-
-			// Verify a [listener] is not already set
-			if (this.config.firebase.listeners.collection) {return false;}
-
-			// Open the Pipe
-			this.fetch();
-		}
-	});
-
-	return Collection;
+	};
 };
 
 /*
@@ -1220,20 +924,19 @@ function FirebaseData (data, priority)
  ******************************************************************************/
 function FirebaseSnapshot (data, url)
 {
-	// The export
-	var my = {};
+	return {
 
 	/*
 	 * Return a simple Object version of [data].[value]
 	 *
 	 **************************************************************************/
-	my.val = function () {return FirebaseData(data);};
+	'val' : function () {return FirebaseData(data);},
 
 	/*
 	 * Return a new FirebaseSnapshot @ [childPath]
 	 *
 	 **************************************************************************/
-	my.child = function (childPath)
+	'child' : function (childPath)
 	{
 		// Safety Net
 		if (! _.isString(childPath)) {return null;}
@@ -1250,13 +953,13 @@ function FirebaseSnapshot (data, url)
 
 		// Return a new FirebaseSnapshot @ [childPath]
 		return new FirebaseSnapshot(_child, url + '/' + childPath);
-	};
+	},
 
 	/*
 	 * Iterate over [children] by [priority]
 	 *
 	 **************************************************************************/
-	my.forEach = function (childAction)
+	'forEach' : function (childAction)
 	{
 		// Safety Net
 		if (! _.isFunction(childAction) || ! _.isObject(data) || ! data.childrenCount) {return;}
@@ -1271,13 +974,13 @@ function FirebaseSnapshot (data, url)
 		});
 
 		return (_stop);
-	};
+	},
 
 	/*
 	 * Return a new Firebase for [url]
 	 *
 	 **************************************************************************/
-	my.hasChild = function (childPath)
+	'hasChild' : function (childPath)
 	{
 		// Safety Net & Simple Fail
 		if (! _.isString(childPath) || ! my.hasChildren()) {return false;}
@@ -1294,52 +997,52 @@ function FirebaseSnapshot (data, url)
 
 		// Return a new FirebaseSnapshot @ [childPath]
 		return (! _.isNull(_child));
-	};
+	},
 
 	/*
 	 * Evalute [data].[childrenCount] as BOOLEAN
 	 *
 	 **************************************************************************/
-	my.hasChildren = function () {return (_.isObject(data) && data.childrenCount ? true : false);};
+	'hasChildren' : function () {return (_.isObject(data) && data.childrenCount ? true : false);},
 
 	/*
 	 * Return the [data].[name]
 	 *
 	 **************************************************************************/
-	my.name = function ()
+	'name' : function ()
 	{
 		// Simple Safety Net (already at the top)
 		if (! url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
 
 		// Pop the [child] off and you have the [name]
 		return url.replace(/^https\:\/\/[\S]+\/([^\/]+)[\/]?/i, "$1");
-	};
+	},
 
 	/*
 	 * Evalute [data].[childrenCount] as INT
 	 *
 	 **************************************************************************/
-	my.numChildren = function () {return (_.isObject(data) ? data.childrenCount : 0);};
+	'numChildren' : function () {return (_.isObject(data) ? data.childrenCount : 0);},
 
 	/*
 	 * Return a new Firebase for [url]
 	 *
 	 **************************************************************************/
-	my.ref = function () {return exports.new(url);};
+	'ref' : function () {return exports.new(url);},
 
 	/*
 	 * Return [data].[getPriority] or NULL
 	 *
 	 **************************************************************************/
-	my.getPriority = function () {return (_.isObject(data) ? data.priority : null);};
+	'getPriority' : function () {return (_.isObject(data) ? data.priority : null);},
 
 	/*
 	 * Return a simple Object version of [data].[value] w/[priority] notations
 	 *
 	 **************************************************************************/
-	my.exportVal = function () {return FirebaseData(data, true);};
+	'exportVal' : function () {return FirebaseData(data, true);}
 
-	return my;
+	};
 };
 
 /*
