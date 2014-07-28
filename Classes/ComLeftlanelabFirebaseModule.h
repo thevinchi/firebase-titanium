@@ -14,6 +14,5 @@
 @property (nonatomic, strong) NSMutableDictionary * gQuery;
 @property (nonatomic, strong) NSArray * gEventTypes;
 @property (nonatomic, strong) NSMutableDictionary * gListeners;
-@property (nonatomic, strong) NSMutableDictionary * gQueryListeners;
 
 @end

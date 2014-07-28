@@ -16,7 +16,6 @@
 @synthesize gQuery;
 @synthesize gEventTypes;
 @synthesize gListeners;
-@synthesize gQueryListeners;
 
 #pragma mark Internal
 
@@ -61,9 +60,8 @@
 	// this method is called when the module is being unloaded
 	// typically this is during shutdown. make sure you don't do too
 	// much processing here or the app will be quit forceably
-	
+
 	// you *must* call the superclass
-	NSLog(@"[INFO] %@ Shutdown", self);
 	[super shutdown:sender];
 }
 
@@ -72,7 +70,6 @@
 -(void)dealloc
 {
 	// release any resources that have been retained by the module
-	NSLog(@"[INFO] %@ Deallocating", self);
 }
 
 #pragma mark Internal Memory Management
@@ -82,7 +79,6 @@
 	// optionally release any resources that can be dynamically
 	// reloaded once memory is available - such as caches
 	[super didReceiveMemoryWarning:notification];
-	NSLog(@"[INFO] %@ Memory Warning!!!", self);
 }
 
 #pragma mark Listener Notifications
@@ -412,7 +408,7 @@
 	if (_search == NSNotFound) {return;}
 	int *_event = _search;
 
-	NSLog(@"[INFO] Adding Listener: %@ (%@)", _type, _url);
+//	NSLog(@"[INFO] Adding Listener: %@ (%@)", _type, _url);
 
 	// Initialize [gInstances] for [url] (only done once p/[url])
 	if (! self.gInstances[_url])
@@ -437,7 +433,7 @@
 	// Save the [handle] in [gListeners].[type]
 	[self.gListeners[_url] setObject:[NSNumber numberWithInteger:_handle] forKey:[NSNumber numberWithInteger:_handle]];
 
-	NSLog(@"[INFO] Returning Handle: (%@)", [NSNumber numberWithInteger:_handle]);
+//	NSLog(@"[INFO] Returning Handle: (%@)", [NSNumber numberWithInteger:_handle]);
 
 	// Return the [key] for future reference
 	return [NSNumber numberWithInteger:_handle];
@@ -458,7 +454,7 @@
 	NSString *_url = ([args[0] isKindOfClass:[NSString class]] ? args[0] : nil);
 	NSNumber *_handle = ([args[1] isKindOfClass:[NSNumber class]] ? args[1] : nil);
 
-	NSLog(@"[INFO] Removing Listener: %@ (%@)", _handle, _url);
+//	NSLog(@"[INFO] Removing Listener: %@ (%@)", _handle, _url);
 
 	// Argument Filter
 	if (! _url || ! _handle) {return;}
@@ -480,7 +476,7 @@
 	// Remove the [listener] by [handle] from [gInstance]
 	[self.gInstances[_url] removeObserverWithHandle:[_handle integerValue]];
 
-	NSLog(@"[INFO] Listener Removed: %@ (%@)", _handle, _url);
+//	NSLog(@"[INFO] Listener Removed: %@ (%@)", _handle, _url);
 
 	// Remove the [handle] from [gListeners].[type]
 	[self.gListeners[_url] removeObjectForKey:_handle];
@@ -488,7 +484,7 @@
 	// Release [gInstance].[url] if this is the last [gListener]
 	if (! [self.gListeners[_url] count])
 	{
-		NSLog(@"[INFO] Releasing Instance (%@)", _url);
+//		NSLog(@"[INFO] Releasing Instance (%@)", _url);
 
 		[self.gInstances removeObjectForKey:_url];
 		[self.gListeners removeObjectForKey:_url];
