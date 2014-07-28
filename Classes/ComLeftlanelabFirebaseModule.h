@@ -9,9 +9,10 @@
 
 @interface ComLeftlanelabFirebaseModule : TiModule {}
 
-@property (nonatomic, retain) NSString * url;
-@property (nonatomic, retain) NSMutableDictionary * gInstances;
-@property (nonatomic, retain) NSArray * gEventTypes;
-@property (nonatomic, retain) NSMutableDictionary * gListeners;
+@property (nonatomic, strong) NSString * url;
+@property (nonatomic, strong) NSMutableDictionary * gInstances;
+@property (nonatomic, strong) NSMutableDictionary * gQuery;
+@property (nonatomic, strong) NSArray * gEventTypes;
+@property (nonatomic, strong) NSMutableDictionary * gListeners;
 
 @end
