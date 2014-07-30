@@ -5,7 +5,7 @@
  * and licensed under the Apache Public License (version 2)
  */
 #import "TiModule.h"
-#import <Firebase/Firebase.h>
+#import "Firebase.h"
 
 @interface ComLeftlanelabFirebaseModule : TiModule {}
 
