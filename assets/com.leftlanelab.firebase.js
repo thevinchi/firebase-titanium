@@ -2,11 +2,36 @@
  * @author vstross
  */
 
+var _instances = {'Firebase':0, 'FirebaseQuery':0},
+	_firebase = false,
+	_forge = false;
+
 /**
  * Public API Endpoint for getting a [Firebase] reference or module proxy
  *
  ******************************************************************************/
-exports.new = function (url) {return new Firebase(url, this);};
+exports.new = function (url)
+{
+	// Only execute on the first Firebase...
+	if (! _instances.Firebase++)
+	{
+		// Set the global [firebase] handle
+		_firebase = this;
+
+		// Local Disk Persistence
+		if (Ti.App.Properties.getBool('com.leftlanelab.firebase.persistence', false))
+		{
+			console.log('Firebase Startup: Setting Persistence');
+			_firebase.persistence();
+		}
+
+		// Try to set the [forge] from App Properties
+		_forge = Ti.App.Properties.getString('com.leftlanelab.firebase.forge', false);
+	}
+
+	// Return a new Firebase API Controller
+	return new Firebase(url);
+};
 
 /**
  * Public API Endpoint for getting a [firebase] token
@@ -31,20 +56,16 @@ exports.token = function (payload, options, secret)
  * Local Firebase API interface object
  *
  ******************************************************************************/
-function Firebase (url, module)
+function Firebase (url)
 {
 	// Global Variables
-	this.firebase = module;
 	this.listeners = {};
 
-	// Try to set the [forge] from App Properties
-	this.forge = (Ti.App.Properties.hasProperty('com.leftlanelab.firebase.forge') ? Ti.App.Properties.getString('com.leftlanelab.firebase.forge') : false);
-
 	// Safety Net
-	if (! this.forge && (_.isUndefined(url) || _.isEmpty(url))) {return false;}
+	if (! _forge && (_.isUndefined(url) || _.isEmpty(url))) {return false;}
 
 	// Set the [url] (allows for absolute &| empty [forge]), then strip trailing "/" for the sloppy types...
-	this.url = (! _.isUndefined(url) && url.indexOf('https://') === 0 ? url : (this.forge || '') + (url || '')).replace(/^https\:\/\/([\S]+[^\/])[\/]?/i, "https://$1");
+	this.url = (! _.isUndefined(url) && url.indexOf('https://') === 0 ? url : (_forge || '') + (url || '')).replace(/^https\:\/\/([\S]+[^\/])[\/]?/i, "https://$1");
 
 	// Return the new [Firebase] pseudo-reference
 	return this;
@@ -61,7 +82,7 @@ Firebase.prototype.auth = function (authToken, onComplete, onCancel)
 	if (! _.isString(authToken)) {return false;}
 
 	// Kick the [firebase]
-	this.firebase.auth(this.url, authToken,
+	_firebase.auth(this.url, authToken,
 		(_.isFunction(onComplete) ? onComplete : null),
 		(_.isFunction(onCancel) ? onCancel : null)
 	);
@@ -77,7 +98,7 @@ Firebase.prototype.auth = function (authToken, onComplete, onCancel)
 Firebase.prototype.unauth = function (onComplete)
 {
 	// Kick the [firebase]
-	this.firebase.unauth(this.url, (_.isFunction(onComplete) ? onComplete : null));
+	_firebase.unauth(this.url, (_.isFunction(onComplete) ? onComplete : null));
 
 	return this;
 };
@@ -93,7 +114,7 @@ Firebase.prototype.child = function (path)
 	if (! _.isString(path)) {return false;}
 
 	// Create the [child] reference
-	return this.firebase.new(this.url + '/' + (path.indexOf('/') === 0 ? path.substring(1) : path));
+	return _firebase.new(this.url + '/' + (path.indexOf('/') === 0 ? path.substring(1) : path));
 };
 
 /*
@@ -107,7 +128,7 @@ Firebase.prototype.parent = function ()
 	if (! this.url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
 
 	// Pop the [child] off and the new reference is the [parent]
-	return this.firebase.new(this.url.replace(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i, "https://$1"));
+	return _firebase.new(this.url.replace(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i, "https://$1"));
 };
 
 /*
@@ -118,7 +139,7 @@ Firebase.prototype.parent = function ()
 Firebase.prototype.root = function ()
 {
 	// Pop the [children] off and the new reference is the [root]
-	return this.firebase.new(this.url.replace(/^https\:\/\/([^\/?#]+)[\/]?([\S]+)?/i, "https://$1"));
+	return _firebase.new(this.url.replace(/^https\:\/\/([^\/?#]+)[\/]?([\S]+)?/i, "https://$1"));
 };
 
 /*
@@ -157,7 +178,7 @@ Firebase.prototype.set = function (value, onComplete)
 	if (_.isUndefined(value)) {return this;}
 
 	// Set [value] in [firebase]
-	this.firebase.set(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
+	_firebase.set(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
 	{
 		onComplete(error);
 	}));
@@ -176,7 +197,7 @@ Firebase.prototype.update = function (value, onComplete)
 	if (_.isUndefined(value)) {return this;}
 
 	// Update [firebase] with [value]
-	this.firebase.update(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
+	_firebase.update(this.url, value, (! _.isFunction(onComplete) ? null : function (error)
 	{
 		onComplete(error);
 	}));
@@ -192,7 +213,7 @@ Firebase.prototype.update = function (value, onComplete)
 Firebase.prototype.remove = function (onComplete)
 {
 	// Remove all data from [firebase]
-	this.firebase.remove(this.url, (! _.isFunction(onComplete) ? null : function (error)
+	_firebase.remove(this.url, (! _.isFunction(onComplete) ? null : function (error)
 	{
 		onComplete(error);
 	}));
@@ -211,11 +232,11 @@ Firebase.prototype.push = function (value, onComplete)
 
 		// Ask for a new [name] from [firebase] and return
 		// a new [firebase] reference
-		this.child(this.firebase.push(this.url))
+		this.child(_firebase.push(this.url))
 	:
 		// Generate a new [child], set [value]/[onComplete]
 		// and return a new [firebase] reference
-		this.child(this.firebase.push(this.url)).set(value, onComplete)
+		this.child(_firebase.push(this.url)).set(value, onComplete)
 	);
 };
 
@@ -230,7 +251,7 @@ Firebase.prototype.setWithPriority = function (value, priority, onComplete)
 	if (_.isUndefined(value) || (! _.isString(priority) && ! _.isNumber(priority))) {return this;}
 
 	// Set [value] && [priority] in [firebase]
-	this.firebase.setWithPriority(this.url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
+	_firebase.setWithPriority(this.url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
 	{
 		onComplete(error);
 	}));
@@ -249,7 +270,7 @@ Firebase.prototype.setPriority = function (priority, onComplete)
 	if (! _.isString(priority) && ! _.isNumber(priority)) {return this;}
 
 	// Set [value] && [priority] in [firebase]
-	this.firebase.setPriority(this.url, priority, (! _.isFunction(onComplete) ? null : function (error)
+	_firebase.setPriority(this.url, priority, (! _.isFunction(onComplete) ? null : function (error)
 	{
 		onComplete(error);
 	}));
@@ -268,7 +289,7 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 	if (! _.isFunction(updateFunction)) {return this;}
 
 	// Initiate a [transaction] in [firebase]
-	this.firebase.transaction(this.url,
+	_firebase.transaction(this.url,
 
 		// Exectute the [updateFunction]
 		function (currentData)
@@ -315,7 +336,7 @@ Firebase.prototype.transaction = function (updateFunction, onComplete, applyLoca
 Firebase.prototype.goOffline = function ()
 {
 	// Kick the Firebase
-	this.firebase.goOffline();
+	_firebase.goOffline();
 };
 
 /*
@@ -326,7 +347,7 @@ Firebase.prototype.goOffline = function ()
 Firebase.prototype.goOnline = function ()
 {
 	// Kick the Firebase
-	this.firebase.goOnline();
+	_firebase.goOnline();
 };
 
 /*
@@ -345,7 +366,7 @@ Firebase.prototype.on = function (eventType, callback, cancelCallback, context)
 	// Set the [listener], and save the [handle]
 	this.listeners[eventType].push({
 		'callback' : callback,
-		'handle' : this.firebase.on(this.url, eventType,
+		'handle' : _firebase.on(this.url, eventType,
 
 			// Kroll Bridge Wrapper for [callback]
 			_.bind(function (data, prevChildName)
@@ -404,7 +425,7 @@ Firebase.prototype.off = function (eventType, callback, context)
 			// Remove the [listener] from [Firebase]
 			_.each(this.listeners[kType], function (vListener)
 			{
-				this.firebase.off(this.url, vListener.handle);
+				_firebase.off(this.url, vListener.handle);
 			}, this);
 		}, this);
 
@@ -424,7 +445,7 @@ Firebase.prototype.off = function (eventType, callback, context)
 		if (vListener.callback === callback)
 		{
 			// Remove [listener] from [firebase] by [handle]
-			this.firebase.off(this.url, vListener.handle);
+			_firebase.off(this.url, vListener.handle);
 
 			// Remove from [listeners] array
 			this.listeners[eventType].splice(key, 1);
@@ -454,7 +475,7 @@ Firebase.prototype.once = function (eventType, successCallback, failureCallback,
 	if (! _.isUndefined(context) && ! _.isObject(context)) {throw Error('Firebase.once: Invalid Arguments');}
 
 	// Kick the [Firebase]
-	this.firebase.once(this.url, eventType,
+	_firebase.once(this.url, eventType,
 
 		// Kroll Bridge Wrapper for [successCallback]
 		_.bind(function (data, prevChildName)
@@ -488,7 +509,7 @@ Firebase.prototype.once = function (eventType, successCallback, failureCallback,
  ******************************************************************************/
 Firebase.prototype.limit = function (limit)
 {
-	return new FirebaseQuery (this.url, this.firebase).limit(limit);
+	return new FirebaseQuery (this.url).limit(limit);
 };
 
 /*
@@ -497,7 +518,7 @@ Firebase.prototype.limit = function (limit)
  ******************************************************************************/
 Firebase.prototype.startAt = function (priority, name)
 {
-	return new FirebaseQuery (this.url, this.firebase).startAt(priority, name);
+	return new FirebaseQuery (this.url).startAt(priority, name);
 };
 
 /*
@@ -506,7 +527,7 @@ Firebase.prototype.startAt = function (priority, name)
  ******************************************************************************/
 Firebase.prototype.endAt = function (priority, name)
 {
-	return new FirebaseQuery (this.url, this.firebase).endAt(priority, name);
+	return new FirebaseQuery (this.url).endAt(priority, name);
 };
 
 /*
@@ -515,7 +536,7 @@ Firebase.prototype.endAt = function (priority, name)
  ******************************************************************************/
 Firebase.prototype.onDisconnect = function ()
 {
-	return new FirebaseOnDisconnect(this.url, this.firebase);
+	return new FirebaseOnDisconnect(this.url);
 };
 
 /*
@@ -528,19 +549,18 @@ Firebase.prototype.onDisconnect = function ()
  *
  * 	- expects to be created from an existing [Firebase] instance
  ******************************************************************************/
-function FirebaseQuery (url, module)
+function FirebaseQuery (url)
 {
 	// Safety Net
-	if (! _.isString(url) || ! _.isObject(module)) {return false;}
+	if (! _.isString(url) || ! _.isObject(_firebase)) {return false;}
 
 	// Global Variables
-	this.firebase = module;
 	this.url = url;
 	this.listeners = {};
 	this.query = {};
 
 	// Register the new [instance]
-	this.instance = this.instances.next++;
+	this.instance = _instances.FirebaseQuery++;
 
 	// Return the new [FirebaseQuery] pseudo-reference
 	return this;
@@ -550,7 +570,7 @@ function FirebaseQuery (url, module)
  * FirebaseQuery instance manager
  *
  ******************************************************************************/
-FirebaseQuery.prototype.instances = {'next' : 0};
+//FirebaseQuery.prototype.instances = {'next' : 0};
 
 /*
  * Create a listener for data changes at this location.
@@ -571,7 +591,7 @@ FirebaseQuery.prototype.on = function (eventType, callback, cancelCallback, cont
 	// Set the [listener], and save the [handle]
 	this.listeners[eventType].push({
 		'callback' : callback,
-		'handle' : this.firebase.queryOn(this.instance, eventType,
+		'handle' : _firebase.queryOn(this.instance, eventType,
 
 			// Kroll Bridge Wrapper for [callback]
 			_.bind(function (data, prevChildName)
@@ -630,7 +650,7 @@ FirebaseQuery.prototype.off = function (eventType, callback, context)
 			// Remove the [listener] from [Firebase]
 			_.each(this.listeners[kType], function (vListener)
 			{
-				this.firebase.queryOff(this.instance, vListener.handle);
+				_firebase.queryOff(this.instance, vListener.handle);
 			}, this);
 		}, this);
 
@@ -650,7 +670,7 @@ FirebaseQuery.prototype.off = function (eventType, callback, context)
 		if (vListener.callback === callback)
 		{
 			// Remove [listener] from [firebase] by [handle]
-			this.firebase.queryOff(this.instance, vListener.handle);
+			_firebase.queryOff(this.instance, vListener.handle);
 
 			// Remove from [listeners] array
 			this.listeners[eventType].splice(key, 1);
@@ -683,7 +703,7 @@ FirebaseQuery.prototype.once = function (eventType, successCallback, failureCall
 	if (_.keys(this.query).length < 1) {throw Error ('Query.once: Must set startAt(), endAt(), or limit() first');}
 
 	// Kick the [Firebase]
-	this.firebase.queryOnce(this.instance, eventType,
+	_firebase.queryOnce(this.instance, eventType,
 
 		// Kroll Bridge Wrapper for [successCallback]
 		_.bind(function (data, prevChildName)
@@ -730,7 +750,7 @@ FirebaseQuery.prototype.limit = function (limit)
 	this.query['limit'] = true;
 
 	// Kick the Firebase
-	this.firebase.limit(this.instance, this.url, limit);
+	_firebase.limit(this.instance, this.url, limit);
 
 	return this;
 };
@@ -755,7 +775,7 @@ FirebaseQuery.prototype.startAt = function (priority, name)
 	this.query['startAt'] = true;
 
 	// Kick the Firebase
-	this.firebase.startAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
+	_firebase.startAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
 
 	return this;
 };
@@ -780,7 +800,7 @@ FirebaseQuery.prototype.endAt = function (priority, name)
 	this.query['endAt'] = true;
 
 	// Kick the Firebase
-	this.firebase.endAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
+	_firebase.endAt(this.instance, this.url, priority, (_.isString(name) ? name : null));
 
 	return this;
 };
@@ -789,7 +809,7 @@ FirebaseQuery.prototype.endAt = function (priority, name)
  * Get a Firebase reference to the Query's location.
  *
  ******************************************************************************/
-FirebaseQuery.prototype.ref = function () {return exports.new(this.url);};
+FirebaseQuery.prototype.ref = function () {return _firebase.new(this.url);};
 
 /*
 ===============================================================================>
@@ -801,10 +821,10 @@ FirebaseQuery.prototype.ref = function () {return exports.new(this.url);};
  *
  * 	- expects to be created from an existing [Firebase] instance
  ******************************************************************************/
-function FirebaseOnDisconnect (url, module)
+function FirebaseOnDisconnect (url)
 {
 	// Safety Net
-	if (! _.isString(url)) {return false;}
+	if (! _.isString(url) || ! _.isObject(_firebase)) {return false;}
 
 	return {
 
@@ -815,7 +835,7 @@ function FirebaseOnDisconnect (url, module)
 		'cancel' : function (onComplete)
 		{
 			// Kick the Firebase
-			module.onDisconnectCancel(url, (! _.isFunction(onComplete) ? null : function (error)
+			_firebase.onDisconnectCancel(url, (! _.isFunction(onComplete) ? null : function (error)
 			{
 				onComplete(error);
 			}));
@@ -827,7 +847,7 @@ function FirebaseOnDisconnect (url, module)
 		'remove' : function (onComplete)
 		{
 			// Kick the Firebase
-			module.onDisconnectRemove(url, (! _.isFunction(onComplete) ? null : function (error)
+			_firebase.onDisconnectRemove(url, (! _.isFunction(onComplete) ? null : function (error)
 			{
 				onComplete(error);
 			}));
@@ -843,7 +863,7 @@ function FirebaseOnDisconnect (url, module)
 			if (_.isUndefined(value)) {return;}
 
 			// Kick the Firebase
-			module.onDisconnectSet(url, value, (! _.isFunction(onComplete) ? null : function (error)
+			_firebase.onDisconnectSet(url, value, (! _.isFunction(onComplete) ? null : function (error)
 			{
 				onComplete(error);
 			}));
@@ -859,7 +879,7 @@ function FirebaseOnDisconnect (url, module)
 			if (_.isUndefined(value) || _.isUndefined(priority) || (! _.isNumber(priority) && ! _.isString(priority) && ! _.isNull(priority))) {return;}
 
 			// Kick the Firebase
-			module.onDisconnectSetWithPriority(url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
+			_firebase.onDisconnectSetWithPriority(url, value, priority, (! _.isFunction(onComplete) ? null : function (error)
 			{
 				onComplete(error);
 			}));
@@ -875,7 +895,7 @@ function FirebaseOnDisconnect (url, module)
 			if (_.isUndefined(value)) {return;}
 
 			// Kick the Firebase
-			module.onDisconnectUpdate(url, value, (! _.isFunction(onComplete) ? null : function (error)
+			_firebase.onDisconnectUpdate(url, value, (! _.isFunction(onComplete) ? null : function (error)
 			{
 				onComplete(error);
 			}));
@@ -1028,7 +1048,7 @@ function FirebaseSnapshot (data, url)
 	 * Return a new Firebase for [url]
 	 *
 	 **************************************************************************/
-	'ref' : function () {return exports.new(url);},
+	'ref' : function () {return _firebase.new(url);},
 
 	/*
 	 * Return [data].[getPriority] or NULL
