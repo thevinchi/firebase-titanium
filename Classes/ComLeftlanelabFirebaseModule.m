@@ -50,9 +50,6 @@
 
     // Initialize [gListeners]
     self.gListeners = [NSMutableDictionary dictionary];
-
-    // Enable Automatic Local Persistence
-    [Firebase setOption:@"persistence" to:@YES];
 }
 
 -(void)shutdown:(id)sender
@@ -94,6 +91,15 @@
 */
 
 #pragma Public APIs
+
+/**
+ * Enable Automatic Local Persistence
+ *
+ */
+- (void)persistence: (id)args
+{
+    [Firebase setOption:@"persistence" to:@YES];
+}
 
 /**
  * Authenticate access to this Firebase
