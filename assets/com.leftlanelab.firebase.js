@@ -21,7 +21,6 @@ exports.new = function (url)
 		// Local Disk Persistence
 		if (Ti.App.Properties.getBool('com.leftlanelab.firebase.persistence', false))
 		{
-			console.log('Firebase Startup: Setting Persistence');
 			_firebase.persistence();
 		}
 
