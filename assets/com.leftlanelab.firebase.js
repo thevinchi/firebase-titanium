@@ -1028,7 +1028,14 @@ function FirebaseSnapshot (data, url)
 	 * Return the [data].[name]
 	 *
 	 **************************************************************************/
-	'name' : function () {return data.name;},
+	'name' : function ()
+	{
+		// Simple Safety Net (already at the top)
+		if (! url.match(/^https\:\/\/([\S]*[^\/])\/[\S][^\/]*/i)) {return null;}
+
+		// Pop the [child] off and you have the [name]
+		return url.replace(/^https\:\/\/[\S]+\/([^\/]+)[\/]?/i, "$1");
+	},
 
 	/*
 	 * Evalute [data].[childrenCount] as INT
