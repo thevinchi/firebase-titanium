@@ -1,39 +1,37 @@
-// This is a test harness for your module
-// You should do something interesting in this harness 
-// to test out the module and to provide instructions 
-// to users on how to use it by example.
+/*
 
+********************************************************************************
 
-// open a single window
-var win = Ti.UI.createWindow({
-	backgroundColor:'white'
+Firebase iOS Module for Titanium
+
+Released by Left Lane Lab, LLC
+
+********************************************************************************
+
+This module is constructed to mimic the official Firebase JavaScript Library.
+
+All functions available with the official Firebase library are also available
+on this module. All methods take the same arguments and return the same values.
+
+Online Documentation: http://firebase.leftlanelab.com
+
+*******************************************************************************/
+
+// Load the Module
+var Firebase = require('com.leftlanelab.firebase');
+
+// Create a [Users] reference from your Firebase
+var Users = Firebase.new('https://SampleChat.firebaseIO-demo.com/users');
+
+// Open a [Users] Window with a [User] Label
+var winUsers = Ti.UI.createWindow({backgroundColor:'white'});
+var lblUser = Ti.UI.createLabel();
+winUsers.add(lblUser);
+winUsers.open();
+
+// Add a Listener to the [Users] reference
+Users.on('child_added', function (snapshot)
+{
+	// Update the [User] label
+	lblUser.text = snapshot.val().name;
 });
-var label = Ti.UI.createLabel();
-win.add(label);
-win.open();
-
-// TODO: write your module tests here
-var firebase = require('com.leftlanelab.firebase');
-Ti.API.info("module is => " + firebase);
-
-label.text = firebase.example();
-
-Ti.API.info("module exampleProp is => " + firebase.exampleProp);
-firebase.exampleProp = "This is a test value";
-
-if (Ti.Platform.name == "android") {
-	var proxy = firebase.createExample({
-		message: "Creating an example Proxy",
-		backgroundColor: "red",
-		width: 100,
-		height: 100,
-		top: 100,
-		left: 150
-	});
-
-	proxy.printMessage("Hello world!");
-	proxy.message = "Hi world!.  It's me again.";
-	proxy.printMessage("Hello world!");
-	win.add(proxy);
-}
-
