@@ -17,6 +17,9 @@ Online Documentation: http://firebase.leftlanelab.com
 
 *******************************************************************************/
 
+// Important: Include [underscore] library Only for Non-Alloy Projects
+var _ = require('underscore')._;
+
 // Load the Module
 var Firebase = require('com.leftlanelab.firebase');
 
