@@ -24,7 +24,7 @@ var _ = require('underscore')._;
 var Firebase = require('com.leftlanelab.firebase');
 
 // Create a [Users] reference from your Firebase
-var Users = Firebase.new('https://SampleChat.firebaseIO-demo.com/users');
+var Users = Firebase.new('https://l3-appcelerator-demo.firebaseio.com/users');
 
 // Open a [Users] Window with a [User] Label
 var winUsers = Ti.UI.createWindow({backgroundColor:'white'});
@@ -36,5 +36,5 @@ winUsers.open();
 Users.on('child_added', function (snapshot)
 {
 	// Update the [User] label
-	lblUser.text = snapshot.val().name;
+	lblUser.text = "Hello, " + snapshot.val().name;
 });
