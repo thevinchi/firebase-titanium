@@ -1,0 +1,5 @@
+tmp
+bin
+build
+*.zip
+Firebase\ iOS\ Module.xcodeproj/project.xcworkspace/xcuserdata/
