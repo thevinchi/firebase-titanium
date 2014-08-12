@@ -35,7 +35,7 @@ exports.new = function (url)
 /**
  * Public API Endpoint for getting a [firebase] token
  *
- ******************************************************************************/
+ ******************************************************************************
 exports.token = function (payload, options, secret)
 {
 	// Safety Net
@@ -1055,7 +1055,7 @@ function FirebaseSnapshot (data, url)
  * FirebaseTokenGenerator
  *
  * Source: https://cdn.firebase.com/v0/firebase-token-generator.js
- ******************************************************************************/
+ ******************************************************************************
 (function() {var k=null,m=!1,n=this;
 function q(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";else if("function"==
 b&&"undefined"==typeof a.call)return"object";return b}Math.floor(2147483648*Math.random()).toString(36);var r={};function aa(){this.i=void 0}
@@ -1077,3 +1077,4 @@ X.prototype.M=function(a,b){x("FirebaseTokenGenerator.createToken",2,arguments.l
 "number","a number.");d.nbf=c[o];break;case "admin":N(c[o],"boolean","a boolean.");d.admin=c[o];break;case "debug":N(c[o],"boolean","a boolean.");d.debug=c[o];break;case "simulate":N(c[o],"boolean","a boolean.");d.simulate=c[o];break;default:throw Error("FirebaseTokenGenerator.createToken unrecognized option: "+o);}d.v=0;d.iat=Math.floor((new Date).getTime()/1E3);d.d=a;for(var c=wa(w({typ:"JWT",alg:"HS256"})),d=wa(w(d)),e=z.u(c+"."+d,this.O).toString(),f=[],g=0;g<e.length;g+=2)f.push(parseInt(e.substr(g,
 2),16));e=ua(f);e=xa(e);return c+"."+d+"."+e};X.prototype.createToken=X.prototype.M;function wa(a){for(var b=[],c=0,d=0;d<a.length;d++){var e=a.charCodeAt(d);55296<=e&&56319>=e&&(e-=55296,d++,r.L.Q.assert(d<a.length,"Surrogate pair missing trail surrogate."),e=65536+(e<<10)+(a.charCodeAt(d)-56320));128>e?b[c++]=e:(2048>e?b[c++]=e>>6|192:(65536>e?b[c++]=e>>12|224:(b[c++]=e>>18|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}a=ua(b);return xa(a)}
 function xa(a){var b=a.indexOf(".");return 0<=b?a.substring(0,b):a}function va(a){if("object"!==typeof a)return m;if(a===k)return!0;for(var b in a)if(Object.prototype.hasOwnProperty.call(a,b))return m;return!0};}());
+*/
