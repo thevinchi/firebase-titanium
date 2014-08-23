@@ -2,7 +2,10 @@
 # this is your module manifest and used by Titanium
 # during compilation, packaging, distribution, etc.
 #
+
 version: 0.1.9
+# Also update module.xcconfig
+
 apiversion: 2
 description: Firebase iOS Module
 author: Left Lane Lab
