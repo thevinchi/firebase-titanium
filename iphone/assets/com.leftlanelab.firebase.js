@@ -71,6 +71,13 @@ function Firebase (url)
 }
 
 /*
+ * Quick & Easy Class detection hack
+ *
+ ******************************************************************************/
+Firebase.prototype.id = 'com.leftlanelab.firebase';
+Firebase.prototype.version = '0.1.9';
+
+/*
  * Authenticates a Firebase client
  *
  * 	- Matches Firebase Library (VS: 2014-07-23)

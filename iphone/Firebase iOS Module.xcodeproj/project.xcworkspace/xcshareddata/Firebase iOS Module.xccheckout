@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A65FD840-2770-45B3-B74E-D12DC20B0ED4</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Firebase iOS Module</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>E1F48FBE-5DA0-401D-B159-7DB2518D1456</key>
+		<string>ssh://l3-bitbucket/leftlanelab/com.leftlanelab.firebase.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>iphone/Firebase iOS Module.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>E1F48FBE-5DA0-401D-B159-7DB2518D1456</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://l3-bitbucket/leftlanelab/com.leftlanelab.firebase.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>E1F48FBE-5DA0-401D-B159-7DB2518D1456</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>E1F48FBE-5DA0-401D-B159-7DB2518D1456</string>
+			<key>IDESourceControlWCCName</key>
+			<string>source</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -28,13 +28,7 @@
 		24DE9E1211C5FE74003F90F6 /* ComLeftlanelabFirebaseModuleAssets.m in Sources */ = {isa = PBXBuildFile; fileRef = 24DE9E1011C5FE74003F90F6 /* ComLeftlanelabFirebaseModuleAssets.m */; };
 		AA747D9F0F9514B9006C5449 /* ComLeftlanelabFirebase_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* ComLeftlanelabFirebase_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
-		D34FE91419956A5100C9753E /* FDataSnapshot.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE90D19956A5100C9753E /* FDataSnapshot.h */; };
-		D34FE91519956A5100C9753E /* FEventType.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE90E19956A5100C9753E /* FEventType.h */; };
-		D34FE91619956A5100C9753E /* Firebase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D34FE90F19956A5100C9753E /* Firebase.a */; };
-		D34FE91719956A5100C9753E /* Firebase.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE91019956A5100C9753E /* Firebase.h */; };
-		D34FE91819956A5100C9753E /* FMutableData.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE91119956A5100C9753E /* FMutableData.h */; };
-		D34FE91919956A5100C9753E /* FQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE91219956A5100C9753E /* FQuery.h */; };
-		D34FE91A19956A5100C9753E /* FTransactionResult.h in Headers */ = {isa = PBXBuildFile; fileRef = D34FE91319956A5100C9753E /* FTransactionResult.h */; };
+		D362099919A7C89D00DEC916 /* Firebase.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D362099819A7C89D00DEC916 /* Firebase.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,13 +50,7 @@
 		AA747D9E0F9514B9006C5449 /* ComLeftlanelabFirebase_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComLeftlanelabFirebase_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D2AAC07E0554694100DB518D /* libComLeftlanelabFirebase.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libComLeftlanelabFirebase.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		D34FE90D19956A5100C9753E /* FDataSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FDataSnapshot.h; sourceTree = "<group>"; };
-		D34FE90E19956A5100C9753E /* FEventType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FEventType.h; sourceTree = "<group>"; };
-		D34FE90F19956A5100C9753E /* Firebase.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = Firebase.a; sourceTree = "<group>"; };
-		D34FE91019956A5100C9753E /* Firebase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Firebase.h; sourceTree = "<group>"; };
-		D34FE91119956A5100C9753E /* FMutableData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FMutableData.h; sourceTree = "<group>"; };
-		D34FE91219956A5100C9753E /* FQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FQuery.h; sourceTree = "<group>"; };
-		D34FE91319956A5100C9753E /* FTransactionResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FTransactionResult.h; sourceTree = "<group>"; };
+		D362099819A7C89D00DEC916 /* Firebase.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Firebase.framework; path = platform/Firebase.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,7 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D34FE91619956A5100C9753E /* Firebase.a in Frameworks */,
+				D362099919A7C89D00DEC916 /* Firebase.framework in Frameworks */,
 				AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -100,6 +88,7 @@
 		0867D69AFE84028FC02AAC07 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D362099819A7C89D00DEC916 /* Firebase.framework */,
 				AACBBE490F95108600F1A2B1 /* Foundation.framework */,
 			);
 			name = Frameworks;
@@ -108,7 +97,6 @@
 		08FB77AEFE84172EC02AAC07 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				D34FE90C19956A5100C9753E /* Firebase */,
 				24DE9E0F11C5FE74003F90F6 /* ComLeftlanelabFirebaseModuleAssets.h */,
 				24DE9E1011C5FE74003F90F6 /* ComLeftlanelabFirebaseModuleAssets.m */,
 				24DD6CF71134B3F500162E58 /* ComLeftlanelabFirebaseModule.h */,
@@ -126,21 +114,6 @@
 			name = "Other Sources";
 			sourceTree = "<group>";
 		};
-		D34FE90C19956A5100C9753E /* Firebase */ = {
-			isa = PBXGroup;
-			children = (
-				D34FE90D19956A5100C9753E /* FDataSnapshot.h */,
-				D34FE90E19956A5100C9753E /* FEventType.h */,
-				D34FE90F19956A5100C9753E /* Firebase.a */,
-				D34FE91019956A5100C9753E /* Firebase.h */,
-				D34FE91119956A5100C9753E /* FMutableData.h */,
-				D34FE91219956A5100C9753E /* FQuery.h */,
-				D34FE91319956A5100C9753E /* FTransactionResult.h */,
-			);
-			name = Firebase;
-			path = Classes/Firebase;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -149,13 +122,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA747D9F0F9514B9006C5449 /* ComLeftlanelabFirebase_Prefix.pch in Headers */,
-				D34FE91419956A5100C9753E /* FDataSnapshot.h in Headers */,
-				D34FE91919956A5100C9753E /* FQuery.h in Headers */,
-				D34FE91519956A5100C9753E /* FEventType.h in Headers */,
-				D34FE91719956A5100C9753E /* Firebase.h in Headers */,
 				24DD6CF91134B3F500162E58 /* ComLeftlanelabFirebaseModule.h in Headers */,
-				D34FE91819956A5100C9753E /* FMutableData.h in Headers */,
-				D34FE91A19956A5100C9753E /* FTransactionResult.h in Headers */,
 				24DE9E1111C5FE74003F90F6 /* ComLeftlanelabFirebaseModuleAssets.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -253,6 +220,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DSTROOT = /tmp/ComLeftlanelabFirebase.dst;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/platform",
+				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -294,6 +265,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				DSTROOT = /tmp/ComLeftlanelabFirebase.dst;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/platform",
+				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -310,7 +285,7 @@
 				GCC_WARN_UNUSED_VALUE = NO;
 				GCC_WARN_UNUSED_VARIABLE = NO;
 				INSTALL_PATH = /usr/local/lib;
-				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/build",
 					"$(PROJECT_DIR)/Classes",
