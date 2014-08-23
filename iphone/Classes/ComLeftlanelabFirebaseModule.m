@@ -9,7 +9,7 @@
 #import "TiBase.h"
 #import "TiHost.h"
 #import "TiUtils.h"
-#import "Firebase.h"
+#import <Firebase/Firebase.h>
 
 @implementation ComLeftlanelabFirebaseModule
 
@@ -127,7 +127,7 @@
 	
 	// Argument Filter
 	if (! _url || ! _credential) {return;}
-	
+
 	// Kick the Firebase
 	[[[Firebase alloc] initWithUrl:_url] authWithCredential:_credential withCompletionBlock:(! _onComplete ? nil : ^(NSError *error, id data)
 	{
