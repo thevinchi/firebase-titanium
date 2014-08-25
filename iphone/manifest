@@ -3,7 +3,7 @@
 # during compilation, packaging, distribution, etc.
 #
 
-version: 0.1.9
+version: 0.1.10
 # Also update module.xcconfig
 
 apiversion: 2
