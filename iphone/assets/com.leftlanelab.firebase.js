@@ -4,7 +4,7 @@
 
 // Load the [underscore] library (try for both test & studio environments)
 try {var _ = require('com.leftlanelab.firebase.underscore')}
-catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.1.11/platform/iphone/com.leftlanelab.firebase.underscore');}
+catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.2.0/platform/iphone/com.leftlanelab.firebase.underscore');}
 
 var _instances = {'Firebase':0, 'FirebaseQuery':0},
 	_firebase = false,
@@ -37,17 +37,12 @@ exports.new = function (url)
 };
 
 /**
- * Public API Endpoint for getting a [firebase] token
+ * Public API Endpoint for ServerValue Class
  *
- ******************************************************************************
-exports.token = function (payload, options, secret)
-{
-	// Safety Net
-	if (! _.isObject(payload)) {return false;}
-	if (! _.isString(secret) && ! Ti.App.Properties.hasProperty('com.leftlanelab.firebase.secret')) {return false;}
+ ******************************************************************************/
+exports.ServerValue = {
 
-	// Generate and return a [token]
-	return new FirebaseTokenGenerator(secret || Ti.App.Properties.getString('com.leftlanelab.firebase.secret')).createToken(payload, options || {});
+	'TIMESTAMP' : {'.sv':'timestamp'}
 };
 
 /*
@@ -79,7 +74,7 @@ function Firebase (url)
  *
  ******************************************************************************/
 Firebase.prototype.id = 'com.leftlanelab.firebase';
-Firebase.prototype.version = '0.1.11';
+Firebase.prototype.version = '0.2.0';
 
 /*
  * Authenticates a Firebase client
