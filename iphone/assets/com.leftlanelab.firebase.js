@@ -4,7 +4,7 @@
 
 // Load the [underscore] library (try for both test & studio environments)
 try {var _ = require('com.leftlanelab.firebase.underscore')}
-catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.1.10/platform/iphone/com.leftlanelab.firebase.underscore');}
+catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.1.11/platform/iphone/com.leftlanelab.firebase.underscore');}
 
 var _instances = {'Firebase':0, 'FirebaseQuery':0},
 	_firebase = false,
@@ -79,7 +79,7 @@ function Firebase (url)
  *
  ******************************************************************************/
 Firebase.prototype.id = 'com.leftlanelab.firebase';
-Firebase.prototype.version = '0.1.10';
+Firebase.prototype.version = '0.1.11';
 
 /*
  * Authenticates a Firebase client
@@ -994,7 +994,7 @@ function FirebaseSnapshot (data, url)
 		// Iterate over the [keys] of [data].[value] by [priority]
 		_.each(_.sortBy(_.keys(data.value), function (key) {return data.value[key].priority || 0;}), function (key)
 		{
-			_stop = (_stop || childAction(my.child(key)) === true);
+			_stop = (_stop || childAction(new FirebaseSnapshot(data.value[key], url + '/' + key)) === true);
 		});
 
 		return (_stop);
@@ -1007,7 +1007,7 @@ function FirebaseSnapshot (data, url)
 	'hasChild' : function (childPath)
 	{
 		// Safety Net & Simple Fail
-		if (! _.isString(childPath) || ! my.hasChildren()) {return false;}
+		if (! _.isString(childPath) || ! _.isObject(data) || ! data.childrenCount) {return false;}
 
 		// Clean the input (remove leading slash)
 		childPath = (childPath.indexOf('/') === 0 ? childPath.substring(1) : childPath);
