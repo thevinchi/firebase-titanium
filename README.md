@@ -11,7 +11,7 @@ Module has been tested with the following versions of the Titanium SDK:
 
 ## Installation ##
 
-- Download the latest build from the releases page.
+- Download the latest build from the [releases page](https://github.com/LeftLaneLab/firebase-titanium/releases).
 - Use [these instructions](http://docs.appcelerator.com/titanium/3.0/#!/guide/Using_a_Module) from Appcelerator to install the module file.
 
 ## Documentation ##
