@@ -4,7 +4,7 @@
 
 // Load the [underscore] library (try for both test & studio environments)
 try {var _ = require('com.leftlanelab.firebase.underscore')}
-catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.2.0/platform/iphone/com.leftlanelab.firebase.underscore');}
+catch (err) {var _ = require('modules/com.leftlanelab.firebase/0.2.1/platform/iphone/com.leftlanelab.firebase.underscore');}
 
 var _instances = {'Firebase':0, 'FirebaseQuery':0},
 	_firebase = false,
@@ -40,8 +40,8 @@ exports.new = function (url)
  * Public API Endpoint for ServerValue Class
  *
  ******************************************************************************/
-exports.ServerValue = {
-
+exports.ServerValue =
+{
 	'TIMESTAMP' : {'.sv':'timestamp'}
 };
 
@@ -54,7 +54,7 @@ exports.ServerValue = {
  * Firebase API Controller
  *
  ******************************************************************************/
-function Firebase (url)
+var Firebase = function (url)
 {
 	// Global Variables
 	this.listeners = {};
@@ -74,7 +74,7 @@ function Firebase (url)
  *
  ******************************************************************************/
 Firebase.prototype.id = 'com.leftlanelab.firebase';
-Firebase.prototype.version = '0.2.0';
+Firebase.prototype.version = '0.2.1';
 
 /*
  * Authenticates a Firebase client
@@ -554,7 +554,7 @@ Firebase.prototype.onDisconnect = function ()
  *
  * 	- expects to be created from an existing [Firebase] instance
  ******************************************************************************/
-function FirebaseQuery (url)
+var FirebaseQuery = function (url)
 {
 	// Safety Net
 	if (! _.isString(url) || ! _.isObject(_firebase)) {return false;}
@@ -820,7 +820,7 @@ FirebaseQuery.prototype.ref = function () {return _firebase.new(this.url);};
  *
  * 	- expects to be created from an existing [Firebase] instance
  ******************************************************************************/
-function FirebaseOnDisconnect (url)
+var FirebaseOnDisconnect = function (url)
 {
 	// Safety Net
 	if (! _.isString(url) || ! _.isObject(_firebase)) {return false;}
@@ -912,7 +912,7 @@ function FirebaseOnDisconnect (url)
  * Firebase Snapshot->Data Recursion Tool
  *
  ******************************************************************************/
-function FirebaseData (data, priority)
+var FirebaseData = function (data, priority)
 {
 	if (! _.isObject(data) || _.isNull(data)) {return null;}
 
@@ -941,7 +941,7 @@ function FirebaseData (data, priority)
  * Firebase Snapshot Object
  *
  ******************************************************************************/
-function FirebaseSnapshot (data, url)
+var FirebaseSnapshot = function (data, url)
 {
 	return {
 
