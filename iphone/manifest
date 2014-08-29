@@ -9,7 +9,7 @@ version: 1.0
 apiversion: 2
 description: Firebase iOS Module
 author: Left Lane Lab
-license: GPL
+license: MIT
 copyright: Copyright (c) 2014 by Left Lane Lab, LLC
 
 # these should not be edited
