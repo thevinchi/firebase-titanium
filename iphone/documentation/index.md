@@ -1,29 +1,95 @@
 # Firebase iOS Module for Titanium #
 
+Native iOS Module for using Firebase with Titanium apps.
+
+## Compatibility ##
+
+Module has been tested with the following versions of the Titanium SDK:
+
+- Titanium 3.2.1
+- Titanium 3.3.0
+
+## Installation ##
+
+- Download the latest build from the [releases page](https://github.com/LeftLaneLab/firebase-titanium/releases).
+- Use [these instructions](http://docs.appcelerator.com/titanium/3.0/#!/guide/Using_a_Module) from Appcelerator to install the module file.
+
 ## Documentation ##
-
-Please visit the [Online Documentation](http://firebase.leftlanelab.com) website for the most recent version of this information.
-
-## Description ##
 
 This module is constructed to mimic the official [Firebase JavaScript Library](https://www.firebase.com/docs/javascript/firebase/index.html). All functions available with the official library are also available on this module. All methods take the same arguments and return the same values where applicable.
 
-## Accessing the firebase Module ##
+**The only difference is the syntax for creating a new Firebase reference.**
 
-To access this module from JavaScript, you would do the following:
+```JavaScript
+var Firebase = require('com.leftlanelab.firebase');
 
-	var Firebase = require('com.leftlanelab.firebase');
-	var firebaseReference = Firebase.new('https://SampleChat.firebaseIO-demo.com/users');
-	
-	// ... when com.leftlanelab.firebase.forge is set in tiapp.xml
-	var firebaseReference = Firebase.new('/users');
+// WRONG: Official Firebase JavaScript library method
+var firebaseReference = new Firebase('https://l3-appcelerator-demo.firebaseio.com/users');
 
-## Author ##
+// CORRECT: Method to use with this module
+var firebaseReference = Firebase.new('https://l3-appcelerator-demo.firebaseio.com/users');
 
-This module was developed by [Left Lane Lab](http://www.leftlanelab.com), please send support requests to [support@leftlanelab.com](mailto:support@leftlanelab.com).
+// CORRECT: ... when com.leftlanelab.firebase.forge is set in tiapp.xml
+var firebaseReference = Firebase.new('/users');
+```
 
-## License ##
+## Tutorials ##
 
-Copyright 2014 Left Lane Lab, LLC.
+Traverse a Firebase location, and write some data.
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0).
+```JavaScript
+var Firebase = require('com.leftlanelab.firebase');
+
+var sampleChatRef = Firebase.new('https://l3-appcelerator-demo.firebaseio.com');
+var fredNameRef = sampleChatRef.child('users/fred/name');
+fredNameRef.set({first: 'Fred', last: 'Flintstone'});
+```
+
+Now read the data back (and get notified whenever it changes).
+
+```JavaScript
+fredNameRef.on('value', function (nameSnapshot) {
+  var y = nameSnapshot.val();
+  // y now contains the object { first: 'Fred', last: 'Flintstone' }.
+});
+```
+
+Let's add a new chat message child to the message_list location.
+
+```JavaScript
+var messageListRef = sampleChatRef.child('message_list');
+messageListRef.push({'user_id': 'fred', 'text': 'Yabba Dabba Doo!'});
+```
+
+And let's listen for new children added to the message_list location. We'll be notified of our 'Yabba Dabba Doo!' message as well as any other messages that were added in the past, and any new messages that get added in the future.
+
+```JavaScript
+messageListRef.on('child_added', function(newMessageSnapshot) {
+  var userId = newMessageSnapshot.child('user_id').val();
+  var text = newMessageSnapshot.child('text').val();
+  // Do something with user_id and text.
+});
+```
+
+## Global Properties (tiapp.xml) ##
+
+Global configuration options can be defined in the `tiapp.xml` file.
+
+_NOTE: These are optional_
+
+#### Properties ####
+
+* **forge** : base value for new Firebase references. This value can always be overridden by specifying an absolute URL when calling `Firebase.new( )`.
+* **persistence** : Enables the Firebase iOS Disk Persistence feature (default: `false`)
+
+#### Usage ####
+
+```XML
+<?xml version="1.0" encoding="UTF-8"?>
+<ti:app xmlns:ti="http://ti.appcelerator.org">
+  ...
+  <property name="com.leftlanelab.firebase.forge" type="string">https://l3-appcelerator-demo.firebaseio.com/</property>
+  <property name="com.leftlanelab.firebase.persistence" type="bool">true</property>
+  ...
+</ti:app>
+```
