@@ -4,7 +4,7 @@
 
 // Load the [underscore] library (try for both test & studio environments)
 try {var _ = require('com.leftlanelab.firebase.underscore')}
-catch (err) {var _ = require('modules/com.leftlanelab.firebase/1.0/platform/iphone/com.leftlanelab.firebase.underscore');}
+catch (err) {var _ = require('modules/com.leftlanelab.firebase/1.0.1/platform/iphone/com.leftlanelab.firebase.underscore');}
 
 var _instances = {'Firebase':0, 'FirebaseQuery':0},
 	_firebase = false,
@@ -74,7 +74,7 @@ var Firebase = function (url)
  *
  ******************************************************************************/
 Firebase.prototype.id = 'com.leftlanelab.firebase';
-Firebase.prototype.version = '1.0';
+Firebase.prototype.version = '1.0.1';
 
 /*
  * Authenticates a Firebase client
@@ -362,8 +362,7 @@ Firebase.prototype.goOnline = function ()
 Firebase.prototype.on = function (eventType, callback, cancelCallback, context)
 {
 	// Safety Net
-	if (! _.isString(eventType)) {throw Error('Firebase.on: Invalid Arguments');}
-	if (! _.isFunction(callback)) {throw Error('Firebase.on: Invalid Arguments');}
+	if (! _.isString(eventType) || ! _.isFunction(callback)) {throw Error('Firebase.on: Invalid Arguments');}
 
 	// Initialize [listeners] collector for this [type]
 	if (_.isUndefined(this.listeners[eventType])) {this.listeners[eventType] = [];}
@@ -377,8 +376,8 @@ Firebase.prototype.on = function (eventType, callback, cancelCallback, context)
 			_.bind(function (data, prevChildName)
 			{
 				// Bind to [context] (if supplied)
-				if (_.isObject(context))
-				{_.bind(callback, context)(new FirebaseSnapshot(data, this.url), prevChildName);}
+				if (_.isObject(context) || (_.isObject(cancelCallback) && ! _.isFunction(cancelCallback)))
+				{_.bind(callback, context || cancelCallback)(new FirebaseSnapshot(data, this.url), prevChildName);}
 
 				// The context is not important
 				else
