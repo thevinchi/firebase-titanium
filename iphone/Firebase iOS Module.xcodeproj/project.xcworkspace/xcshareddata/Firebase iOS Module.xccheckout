@@ -11,17 +11,17 @@
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>C4A1CD79CC7FB3FF469040AFD65665E37D572A1C</key>
-		<string>ssh://l3-bitbucket/leftlanelab/com.leftlanelab.firebase.git</string>
+		<string>l3-github:LeftLaneLab/firebase-titanium.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>iphone/Firebase iOS Module.xcodeproj/project.xcworkspace</string>
+	<string>iphone/Firebase iOS Module.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>C4A1CD79CC7FB3FF469040AFD65665E37D572A1C</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>ssh://l3-bitbucket/leftlanelab/com.leftlanelab.firebase.git</string>
+	<string>l3-github:LeftLaneLab/firebase-titanium.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
