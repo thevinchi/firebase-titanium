@@ -433,7 +433,15 @@
 	FirebaseHandle _handle = [self.gInstances[_url] observeEventType:_event andPreviousSiblingNameWithBlock:^(FDataSnapshot *_snapshot, NSString *_prevName)
 	{
 		// Execute [callback]
-		[_callback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+		[[NSOperationQueue mainQueue] addOperationWithBlock:^
+		{
+			[_callback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+		}];
+
+/*		dispatch_async(dispatch_get_main_queue(), ^{
+			[_callback call:@[[self FDataSnapshotSpider:_snapshot], (_prevName ? _prevName : [NSNull alloc])] thisObject:nil];
+		});
+*/
 	}
 
 	// Execute [cancelCallback] callback
