@@ -4,7 +4,7 @@
 
 // Load the [underscore] library (try for both test & studio environments)
 try {var _ = require('com.leftlanelab.firebase.underscore')}
-catch (err) {var _ = require('modules/com.leftlanelab.firebase/1.0.1/platform/iphone/com.leftlanelab.firebase.underscore');}
+catch (err) {var _ = require('modules/com.leftlanelab.firebase/1.1/platform/iphone/com.leftlanelab.firebase.underscore');}
 
 var _instances = {'Firebase':0, 'FirebaseQuery':0},
 	_firebase = false,
@@ -74,7 +74,7 @@ var Firebase = function (url)
  *
  ******************************************************************************/
 Firebase.prototype.id = 'com.leftlanelab.firebase';
-Firebase.prototype.version = '1.0.1';
+Firebase.prototype.version = '1.1';
 
 /*
  * Authenticates a Firebase client

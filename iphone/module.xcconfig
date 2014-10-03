@@ -25,8 +25,8 @@
 //
 // IMPORTANT NOTE: always use $(inherited) in your overrides
 //
-FRAMEWORK_SEARCH_PATHS=$(SRCROOT)/../../modules/iphone/com.leftlanelab.firebase/1.0.1/platform
-FRAMEWORK_SEARCH_PATHS=$(FRAMEWORK_SEARCH_PATHS) "/Library/Application Support/Titanium/modules/iphone/com.leftlanelab.firebase/1.0.1/platform"
-FRAMEWORK_SEARCH_PATHS=$(FRAMEWORK_SEARCH_PATHS) "~/Library/Application Support/Titanium/modules/iphone/com.leftlanelab.firebase/1.0.1/platform"
+FRAMEWORK_SEARCH_PATHS=$(SRCROOT)/../../modules/iphone/com.leftlanelab.firebase/1.1/platform
+FRAMEWORK_SEARCH_PATHS=$(FRAMEWORK_SEARCH_PATHS) "/Library/Application Support/Titanium/modules/iphone/com.leftlanelab.firebase/1.1/platform"
+FRAMEWORK_SEARCH_PATHS=$(FRAMEWORK_SEARCH_PATHS) "~/Library/Application Support/Titanium/modules/iphone/com.leftlanelab.firebase/1.1/platform"
 
 OTHER_LDFLAGS=$(inherited) -dynamic -licucore -lc++ -framework CFNetwork -framework Security -framework SystemConfiguration -framework Firebase
